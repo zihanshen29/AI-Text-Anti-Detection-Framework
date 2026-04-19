@@ -1,5 +1,9 @@
 # AI Detection Workflow
 
+写在开头
+是什么？这个工作流是我为了降低文章的ai率自己跑出来的，目前只试了英文文本。实测效果：修改之后对比修改之前，读起来的“ai味”明显变少，“人味”更浓。
+如何使用？此工作流建议配合Claude Code或者Codex等智能体使用，文章建议使用latex格式，这两者结合可以将文章内容和格式完全交给ai来做，你只需要写提示词和审查。跑完这个工作流后，先把文章送检，查出来的报告把里面ai率较高的段落再重点过一遍，最多2遍后ai率即可达标。
+
 A structured, three-layer framework for reducing AI-detection signals in long-form documents — theses, research papers, reports, long blog posts — **without** destroying technical content or leaving you guessing whether anything actually improved.
 
 支持中文和英文文档，两种语言各有独立的规则库。
