@@ -1,47 +1,157 @@
-# 降低文本ai率工具
+# AI Detection Workflow
 
-## 项目概述
-本框架利用逆向工程原理，针对困惑度（Perplexity）、突发性（Burstiness）和N元语法（N-grams），通过负面词汇约束和句法方差控制，将机器文本转化为具有自然人类统计特征的文本。本项目旨在恢复AI文本的人类认知流动性、消除机器生成的统计学刻板印象，并提升自动化报告的可读性与真实感。
+A structured, three-layer framework for reducing AI-detection signals in long-form documents — theses, research papers, reports, long blog posts — **without** destroying technical content or leaving you guessing whether anything actually improved.
 
-## 检测机制解构
-主流检测系统（如 GPTZero, Turnitin）之所以能够精准发现 AI 文本，是因为它们捕捉到了当前生成式AI在追求全局概率最优解时表现出的高度统一性。本框架通过强制拉升局部可预测性的困惑度 ($PPL$) 以及宏观结构上的句子长度标准差 ($\sigma_l$)，从数学层面上摧毁这些检测算法赖以生存的平滑度特征。
+支持中文和英文文档，两种语言各有独立的规则库。
 
-## 部署与使用
+---
 
-**1. 网页端大模型 (ChatGPT, Claude 等) 使用：**
-直接前往 `prompts/` 目录，复制 `english_humanizer.md` 或 `chinese_humanizer.md` 的全部内容，作为 System Prompt 或对话的首条指令发送给模型即可。
+## Why this exists
 
-**2. 自动化 Agent (Claude Code, Cursor 等) 部署：**
-将 `skills/` 目录下的相应 `SKILL.md` 下载并克隆到你的本地工作流技能目录中（例如 `~/.claude/skills/`），实现一键式 API 调用。
+Most "one-click AI humanizer" tools fail in predictable ways:
 
-## 基准测试对比
-基于多轮内部基准测试：
-***未优化原始 AI 文本**（高频触发 "delve", "landscape", "首先" 等红色预警词）：AI 判定率通常 **> 99%**
-**经本框架 Humanizer 重构后文本**：AI 判定率稳定降至 **< 5%**
+- They touch content that shouldn't be touched — numbers, equations, citations, proper nouns.
+- They miss external constraints (school style guides, journal house rules) because they never ask.
+- They introduce new AI patterns while fixing old ones.
+- They give you no way to measure whether the rewrite actually lowered the detector score.
 
-## 迭代与演进
-随着 Turnitin 等检测系统在 2026 年及未来的持续架构升级，AI 的写作指纹也在不断变化。欢迎全球开发者与研究人员通过提交 Pull Request，持续贡献新发现的高危词汇和语法模板，共同维护并演进本反侦察规则库！
+This framework **never rewrites in a single pass**. The work is split into three layers. You review between layers. You run the detector between rounds. If a round makes things worse, you can roll back exactly what changed.
 
-# AI-Text-Anti-Detection-Framework
+---
 
-## Overview
-This framework utilizes reverse engineering principles targeting Perplexity, Burstiness, and N-grams. By applying negative lexical constraints and controlling syntactic variance, it transforms machine-generated text into text with natural human statistical features[c. This project aims to restore human cognitive fluidity to AI text, eliminate machine-generated statistical stereotypes, and enhance the readability and authenticity of automated reports.
+## The three layers
 
-## Detection Theory
-Mainstream detection systems (such as GPTZero and Turnitin) can accurately identify AI text because they capture the high degree of uniformity exhibited by current generative AI when pursuing the global optimal probability solution. This framework destroys the smoothness features these detection algorithms rely on at a mathematical level by forcibly inflating the local predictability's perplexity ($PPL$) and the macro-structural standard deviation of sentence length ($\sigma_l$).
+### Layer 0 — Discovery
+Read the document, detect language and genre, **ask** about external constraints (school guide? previous drafts? which detector are you targeting?), and scan for AI patterns actually present in *your* document — not the generic checklist every humanizer uses.
 
-## Installation & Usage
+→ produces `discovery.md` (you review)
 
-**1. Web-based LLM Usage (ChatGPT, Claude, etc.):**
-Navigate directly to the `prompts/` directory, copy the entire content of `english_humanizer.md` or `chinese_humanizer.md`, and send it to the model as a System Prompt or the first instruction in your conversation.
+### Layer 1 — Planning
+Turn the diagnosis into a round-by-round plan. Every fix gets an exact **before/after** pair, an anti-regression check against your earlier drafts (so you don't accidentally drift back toward a version that would raise similarity scores), and a technical-fidelity check so no citation or equation reference gets disturbed.
 
-**2. Automated Agent Deployment (Claude Code, Cursor, etc.):**
-Download and clone the corresponding `SKILL.md` from the `skills/` directory into your local workflow skills directory (e.g., `~/.claude/skills/`) to enable one-click API invocation.
+→ produces `plan.md` (you approve)
 
-## Empirical Results
-Based on multiple rounds of internal benchmarking:
-***Unoptimized raw AI text** (frequently triggering red flag words like "delve", "landscape", "首先"): AI detection rate is typically **> 99%**.
-***Text reconstructed by this framework's Humanizer**: AI detection rate stably drops to **< 5%**.
+### Layer 2 — Execution
+Apply one round at a time. Strict literal string replacement — the agent is forbidden from improvising. Between rounds, you compile the document, run the detector, and record the score. If the score dropped, continue. If not, pause and diagnose.
 
-## Continuous Updates
-As detection systems like Turnitin undergo continuous architectural upgrades in 2026 and beyond, AI writing fingerprints are also constantly evolving. Developers and researchers worldwide are welcome to continuously contribute newly discovered high-risk vocabulary and syntactic templates by submitting Pull Requests, collaboratively maintaining and evolving this anti-detection rule base!
+→ produces `CHANGES_round1.md`, `CHANGES_round2.md`, … (one per round)
+
+---
+
+## What a session looks like
+
+```
+You:     Here's my thesis. I need to lower the AI score.
+
+Claude:  Before I start, a few questions:
+         - Which detector did you use? What score did it give?
+         - Is there a school style guide or thesis manual?
+         - Do you have earlier drafts (v1, v2...)?
+         - Anything I must not change?
+
+You:     GPTZero, 87%. Here's the Heriot-Watt guide.
+         Earlier drafts v10 and v12 attached. Don't touch 
+         equations or citations.
+
+Claude:  [Layer 0 scans the document]
+         Here's discovery.md. I found 14 fragment sentences,
+         22 tense slips that violate your school guide, 6 AI 
+         cliché phrases. Recommended 5 rounds. Approve?
+
+You:     Looks right. Go.
+
+Claude:  [Layer 1 plans]
+         Here's plan.md with 42 fixes across 5 rounds. Every 
+         fix has a verbatim before/after, checked against 
+         v10 and v12. Review?
+
+You:     Approved.
+
+Claude:  [Layer 2 runs Round 1]
+         Round 1 complete. 12 fixes applied. Compile, run 
+         the detector, fill in the Measurement section of 
+         CHANGES_round1.md, then tell me when to start Round 2.
+
+You:     [compiles, runs GPTZero: 87% → 64%]
+         Good drop. Run Round 2.
+
+...
+```
+
+---
+
+## Structure
+
+```
+ai-detection-workflow/
+├── SKILL.md                   # entry point, skill metadata
+├── workflow/
+│   ├── discovery.md           # Layer 0 prompt
+│   ├── planning.md            # Layer 1 prompt
+│   └── execution.md           # Layer 2 prompt
+├── rules/
+│   ├── en/                    # English — syntactic patterns
+│   │   └── sentence_patterns.md
+│   └── zh/                    # 中文 — 词汇和套语
+│       └── ai_cliches.md
+└── templates/                 # output file skeletons
+    ├── discovery_output.md
+    ├── plan_output.md
+    └── changes_log.md
+```
+
+The English and Chinese rule libraries are deliberately **asymmetric**. English AI detectors mostly weight syntactic features (burstiness, em-dash density, parallel structure), so `rules/en/` is pattern-heavy. Chinese detectors mostly weight fixed vocabulary (赋能/抓手/综上所述 …), so `rules/zh/` is word-list-heavy. Forcing the two into the same format would produce a worse skill for both languages.
+
+---
+
+## How to use it
+
+This is an [Anthropic Skill](https://docs.claude.com/en/docs/claude-code/skills). You can also drop the individual prompt files into Cursor, Codex, Claude Code, Cline, or any other agent that accepts markdown prompts.
+
+**With Claude.ai or Claude Code:**
+1. Clone this repo into your skill directory.
+2. Start a chat: *"I want to lower the AI detection score on this document"* or *"帮我降低这篇论文的 AI 率"*.
+3. Upload the document. Claude loads Layer 0 automatically and asks you the discovery questions.
+
+**Manually (with any agent):**
+1. Start with `workflow/discovery.md` as the system prompt.
+2. After the agent produces `discovery.md`, start a new conversation with `workflow/planning.md` and paste in the approved discovery.
+3. For each round, open a new conversation with `workflow/execution.md` and paste in the approved plan plus "run Round N".
+
+---
+
+## Supported detectors
+
+**English:** GPTZero · Turnitin AI · Originality.ai · Pangram · ZeroGPT · Copyleaks
+
+**中文:** 知网 AIGC · 万方 AIGC · 维普 · 笔灵 · PaperPass
+
+Rules are organized so you can prioritize by target detector. If you only care about GPTZero, Layer 1 will weight the fixes that GPTZero specifically flags. If you care about 知网, it picks a different priority order.
+
+---
+
+## Status
+
+Work in progress. Completed so far:
+
+- [x] Three-layer workflow prompts (`SKILL.md` + `workflow/*`)
+- [x] Output templates (3 files)
+- [x] English rule library — sentence patterns (20 rules)
+- [x] Chinese rule library — AI clichés (18 rules)
+- [ ] English — tell-tale phrases, detector profiles
+- [ ] Chinese — sentence patterns, detector profiles
+- [ ] End-to-end validation on a real document
+
+---
+
+## What this is NOT for
+
+This tool is for writers whose **legitimately human-written content** was flagged by overactive detectors, or for revising **AI-drafted content** that needs to preserve technical accuracy (e.g., a researcher who used AI as a drafting aid but needs to submit work that reflects their own technical judgment).
+
+It is **not** a tool for academic dishonesty. Using it does not remove your responsibility to follow the academic integrity rules of your institution. If your university requires you to declare AI assistance, declare it.
+
+---
+
+## License
+
+MIT
