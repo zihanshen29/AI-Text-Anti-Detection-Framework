@@ -102,19 +102,23 @@ If any of these urges appear, the correct response is to stop, finish the round 
 
 ## Step 5 — Produce `CHANGES_roundN.md`
 
-Use the template at `templates/changes_log.md`. Required sections:
+Use the template at `templates/changes_log.md`. Required sections, numbered to match the template (§0 through §7):
 
-1. **Round header** — round number, tier, scope, invocation timestamp.
-2. **Pre-flight results** — which fixes passed, which failed, any user-approved drops.
-3. **Applied edits** — one block per fix, with:
+- **§0 Round Header** — round number, tier, scope, invocation timestamp.
+- **§1 Pre-Flight Results** — which fixes passed, which failed, any user-approved drops.
+- **§2 Applied Edits** — one block per fix, with:
    - Fix ID (matching `plan.md`).
    - File path and line range (post-edit line numbers).
    - BEFORE string (verbatim).
    - AFTER string (verbatim).
    - Application status: applied / skipped (with reason).
-4. **Guardrail verification** — explicit confirmation that the guardrail inventory items in the edited regions are byte-identical. Spot-check at least three guardrails per round.
-5. **Observations for future planning** — anything noticed during execution that Layer 1 might want to consider for later rounds (but NOT applied as ad-hoc edits in this round).
-6. **Placeholder for measurement** — the user fills this in after running the detector. Include fields for: detector name, pre-round score, post-round score, delta, similarity score if applicable, notes.
+- **§3 Guardrail Verification** — explicit confirmation that the guardrail inventory items in the edited regions are byte-identical. Spot-check at least three guardrails per round.
+- **§4 Observations for Future Planning** — anything noticed during execution that Layer 1 might want to consider for later rounds (but NOT applied as ad-hoc edits in this round).
+- **§5 Measurement** — placeholder for the user to fill after compile + detect. Include fields for: detector name, pre-round score, post-round score, delta, similarity score if applicable, notes. Leave empty when handing off.
+- **§6 Decision for Next Round** — placeholder for the user. Lists: proceed / proceed-with-amendments / pause / rollback / skip-to-audit. Leave empty when handing off.
+- **§7 Rollback** — only filled if §6 selects rollback. Leave entirely omitted otherwise.
+
+The executor fills §0 through §4. The user fills §5 and §6 after measuring. §7 appears only if rollback occurs.
 
 Save `CHANGES_roundN.md` in the same directory as `plan.md`.
 

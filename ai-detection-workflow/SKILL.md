@@ -34,8 +34,8 @@ Layer 1 — Planning        Consume discovery.md, produce round-by-round
 
 Layer 2 — Execution       Run ONE round at a time. Between rounds:
 (workflow/execution.md)   compile, run detector, log delta, decide next round.
-                          OUTPUT → round_N_changes.md per round
-                                + final CHANGES.md
+                          OUTPUT → CHANGES_roundN.md per round
+                                + final CHANGES_summary.md
 ```
 
 ## File map
@@ -45,21 +45,37 @@ SKILL.md                         ← you are here
 workflow/
   discovery.md                   Layer 0 prompt
   planning.md                    Layer 1 prompt
-  execution.md                   Layer 2 per-round prompt
+  execution.md                   Layer 2 per-round prompt (one call per round)
 rules/
-  en/
-    tell_tale_phrases.md         words/phrases detectors latch onto in EN
-    sentence_patterns.md         em-dash, triplets, uniform length, etc.
-    detector_profiles.md         GPTZero vs Turnitin vs Originality
-  zh/
-    ai_cliches.md                赋能/抓手/综上所述/全方位 etc.
-    sentence_patterns.md         句长均匀、完美列举、四字堆叠
-    detector_profiles.md         知网 vs 万方 vs 维普 vs 笔灵
-templates/
-  discovery_output.md            template for Layer 0 output
-  plan_output.md                 template for Layer 1 output
-  changes_log.md                 template for Layer 2 per-round logs
+  en/                            loaded when document is English
+    sentence_patterns.md         P-01..P-20  structural: burstiness, em-dash,
+                                             triplets, fragment clusters, openers
+    tell_tale_phrases.md         V-01..V-45  vocabulary: delve/nuanced/leverage,
+                                             Latinate verbs, hedges, filler
+    detector_profiles.md         6 detectors: GPTZero, Turnitin AI, Originality,
+                                             Pangram, Copyleaks, ZeroGPT
+  zh/                            中文文档时加载
+    ai_cliches.md                C-01..C-18  词汇套语：赋能/抓手/综上所述/
+                                             任重道远/完美列举
+    sentence_patterns.md         S-01..S-20  句法：句长均匀、长定语、被字句、
+                                             "对...进行..."、欧化句式
+    detector_profiles.md         5 检测器：知网 AIGC、万方、维普、笔灵、
+                                          PaperPass
+templates/                       skeletons each layer fills when producing output
+  discovery_output.md            template for Layer 0 → discovery.md
+  plan_output.md                 template for Layer 1 → plan.md
+  changes_log.md                 template for Layer 2 → CHANGES_roundN.md
 ```
+
+### How the rule files are loaded
+
+Layer 0 detects the document's language first, then loads the matching language folder. For a typical scan:
+
+- **English document** → load all three `rules/en/*` files. Run `sentence_patterns.md` (P-NN) structural checks first because they are the most interpretable signals; then run `tell_tale_phrases.md` (V-NN) as a vocabulary grep pass; consult `detector_profiles.md` only after the user names a target detector.
+- **Chinese document** → load all three `rules/zh/*` files. Run `ai_cliches.md` (C-NN) first — it is the highest-yield layer because Chinese detectors are vocabulary-dominated; then run `sentence_patterns.md` (S-NN) for residual syntactic patterns; consult `detector_profiles.md` when the target is named.
+- **Mixed document** → load both folders. Identify which sections are which language and scan each with the matching ruleset.
+
+Never load all six rule files for a document that is monolingual — it doubles scan time and produces noise.
 
 ## How to start
 
@@ -81,11 +97,25 @@ If the user wants to skip ahead (e.g., "I already have a diagnosis, just plan th
 - **Skipping Layer 0 because the user is in a hurry.** The five minutes saved here cost fifty minutes later when the first round produces nonsense because an unstated constraint was violated.
 - **Running "tense fix + fragment merge + cliché removal" in one round.** Each has different risk levels and different detector impact. Separate them.
 - **Trusting AI-pattern intuition instead of grepping the document.** Every document has its own signature. The rule library in `rules/` is a candidate list, not a verdict — Layer 0 must check each candidate against the actual text.
-- **Not recording what each round produced.** Without a per-round `changes_log.md`, a later round can accidentally undo an earlier fix.
+- **Not recording what each round produced.** Without a per-round `CHANGES_roundN.md`, a later round can accidentally undo an earlier fix.
 
 ## Notes on the Chinese vs English split
 
-English detectors (GPTZero, Turnitin AI, Originality, Pangram) weight perplexity + burstiness statistics and a tell-tale vocabulary (`delve`, `nuanced`, `multifaceted`, em-dash overuse, tripled parallel structures). Chinese detectors (知网 AIGC, 万方, 维普, 笔灵, PaperPass) weight fixed academic connectives (综上所述、由此可见), four-character cliché chains (全面提升、深入探讨), perfect enumeration (首先/其次/再次/最后), uniform sentence length, and AI-buzzword vocabulary (赋能、抓手、痛点、生态、闭环). The rule sets overlap less than 20%. Always load the matching language folder under `rules/`; for mixed documents load both.
+The two languages do not share the same AI signal space, and the rule libraries reflect that asymmetry.
+
+**English detectors** (GPTZero, Turnitin AI, Originality, Pangram, Copyleaks, ZeroGPT) weight two families of signals roughly equally:
+
+- **Structural** — perplexity + burstiness, em-dash density, tricolon overuse, paragraph symmetry, fragment clusters. These live in `rules/en/sentence_patterns.md` as P-01..P-20.
+- **Vocabulary** — tell-tale words (`delve`, `nuanced`, `multifaceted`, `tapestry`, `leverage`), Latinate-verb preference (`utilize`, `facilitate`), hedge vocabulary, filler phrases. These live in `rules/en/tell_tale_phrases.md` as V-01..V-45.
+
+**Chinese detectors** (知网 AIGC, 万方, 维普, 笔灵, PaperPass) are dominated by vocabulary and fixed-phrase matching:
+
+- **Vocabulary** — academic connectives (综上所述、由此可见), four-character cliché chains (全面提升、深入探讨), perfect enumeration (首先/其次/再次/最后), closing-sentence tropes (必将、任重道远、未来可期), commercial buzzwords (赋能、抓手、痛点、生态、闭环). These live in `rules/zh/ai_cliches.md` as C-01..C-18.
+- **Structural signals** play a smaller role than in English but still matter after the vocabulary layer is cleaned: uniform sentence length, long adnominal modifiers ("的" chains), passive-voice overuse, "它" pronoun repetition, Europeanized syntax. These live in `rules/zh/sentence_patterns.md` as S-01..S-20.
+
+The practical upshot: English rewrite plans almost always involve both the P and V layers in early rounds. Chinese rewrite plans benefit most from front-loading the C layer (cheap wins, highest detector weight) before moving to the S layer (higher-cost restructuring).
+
+For mixed-language documents, load both language folders. When a section switches language, apply the matching language's rule set to that section; never apply the wrong language's rules even when the document is mostly one language.
 
 ## When this skill should hand off
 

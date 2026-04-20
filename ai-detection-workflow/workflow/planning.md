@@ -157,15 +157,15 @@ Without a measurement protocol the rounds are untestable. This is the second mos
 
 ## Step 8 — Write `plan.md`
 
-Use the template at `templates/plan_output.md`. Required sections in order:
+Use the template at `templates/plan_output.md`. Required sections, numbered to match the template (§0 through §6):
 
-1. **Meta** — document path, language, genre, target detector(s), round count.
-2. **Guardrails** — technical-fidelity inventory copied from discovery.
-3. **Round roster** — table of rounds with tier, scope, and justification.
-4. **Per-round fix blocks** — Step 4 format for every fix.
-5. **Anti-regression notes** — summary of prior-version overlap checks.
-6. **Measurement protocol** — Step 7.
-7. **Open questions** — any fix the planner could not resolve without user input.
+- **§0 Meta** — document path, language, genre, target detector(s), round count.
+- **§1 Guardrails** — technical-fidelity inventory copied from discovery.
+- **§2 Round Roster** — table of rounds with tier, scope, and justification.
+- **§3 Per-Round Fix Plans** — the fix-block format from Step 4 for every fix.
+- **§4 Anti-Regression Summary** — aggregate view of prior-version overlap checks.
+- **§5 Measurement Protocol** — Step 7.
+- **§6 Open Questions** — any fix the planner could not resolve without user input.
 
 ## Step 9 — Hand off to the user
 
