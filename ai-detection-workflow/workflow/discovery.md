@@ -28,6 +28,8 @@ Five minutes of discovery saves fifty minutes of wasted rewrites.
 
 ## Step 1 — Read the document
 
+**Encoding preflight.** Before reading the document, confirm UTF-8 encoding explicitly. On PowerShell use `Get-Content -Raw -Encoding UTF8`; on Unix shells use `cat` directly (UTF-8 is usually default, but verify with `file -bi <path>` when uncertain). After reading, scan the first 500 characters for mojibake markers: `�`, `锟斤拷`, `鍘`, `鐗`, `涓` appearing in suspicious contexts. If any appears, stop and report an encoding failure to the user before proceeding. Do not attempt to "interpret around" broken encoding; downstream rule hits will be unreliable.
+
 Read the document. If it's long (> 10,000 words), read:
 
 - The first 1,500 words (opening, usually includes abstract/intro),
@@ -73,7 +75,7 @@ Wait for answers before continuing. If the user says "just run it, I don't have 
 Now load the language-matched rule files:
 
 - English: `rules/en/tell_tale_phrases.md`, `rules/en/sentence_patterns.md`, `rules/en/detector_profiles.md`.
-- Chinese: `rules/zh/ai_cliches.md`, `rules/zh/sentence_patterns.md`, `rules/zh/detector_profiles.md`.
+- Chinese: `rules/zh/ai_cliches.md`, `rules/zh/sentence_patterns.md`, `rules/zh/context_whitelist.md`, `rules/zh/detector_profiles.md`.
 
 For each pattern in the rule files:
 
@@ -85,6 +87,26 @@ For each pattern in the rule files:
 Also scan for patterns the rule files do NOT cover. AI models evolve; new signatures appear. Record anything that felt AI-generated while reading in Step 1 but isn't in the rule list. Add a "novel patterns" section to the output.
 
 **Do not plan edits in this step.** Discovery only describes what is present; it does not prescribe what to do about it.
+
+### Step 4.5 — Context whitelist filtering for Chinese hits
+
+For Chinese or mixed-language documents, apply the P0.4 context whitelist before forwarding any C-NN or S-NN hit to Layer 1.
+
+Layer 0 must not treat a trigger word as a fix candidate until it has checked the surrounding phrase. Some Chinese triggers are high-risk only when they are isolated buzzwords, but are legitimate inside fixed terms, technical terms, or paired structures.
+
+Known fixed-context filters:
+
+- `生态`: whitelist `生态环境`, `生态系统`, `生态保护`, `市场生态`, `平台生态` unless the surrounding sentence uses the term as vague business filler.
+- `闭环`: whitelist `控制闭环`, `闭环控制`; treat `业务闭环` as genre-dependent, not mechanical.
+- `赋能`: distinguish `赋能教师` / `赋能学生` from business phrases such as `数字赋能`; the former usually needs semantic redesign, not one-word replacement.
+- `痛点`: distinguish concrete `用户痛点` or `行业痛点` from empty slogan use.
+- `不仅`: whitelist `不仅仅`, `不仅如此`; handle `不仅 X 而且 Y` as a paired structure, not a single-token replacement.
+- `一方面`: if paired with `另一方面`, mark both sides as a paired structure. Do not rewrite only one side.
+- `同时`: distinguish `与此同时` from adverbial uses such as `同时进行`.
+- `进行`: flag `对 X 进行 Y` patterns, but whitelist normal verb uses such as `进行得很顺利`.
+- `化` suffixes: whitelist established terms such as `数字化转型`, `自动化控制`, `信息化建设`; flag vague suffix stacking such as `个性化呈现` only when density or genre makes it suspicious.
+
+For each filtered hit, record it in `discovery.md` as `whitelisted: true` with the matched context. Whitelisted hits are evidence for rule-library calibration, but they do not enter the Layer 1 candidate fix list. Ambiguous cases should be marked `whitelisted: review`, with a short note for Layer 1 rather than silently passed through as mechanical edits.
 
 ## Step 5 — Technical-fidelity inventory
 
@@ -109,6 +131,7 @@ Required sections, in order:
 1. **Document summary** — language, genre, length, section structure.
 2. **External constraints** — the user's answers to Step 3 questions, verbatim. If the user declined to answer, note that explicitly.
 3. **Detected AI patterns** — grouped by category (fragments, clichés, tense slips, cliché vocabulary, etc.). Each group lists: pattern name, hit count, sample quotes with locations.
+3A. **Context whitelist / exemption log** — required for Chinese or mixed documents; list trigger hits that were excluded or marked for review by Step 4.5.
 4. **Novel patterns** — anything AI-sounding found in Step 4 but not in the rule library.
 5. **Technical-fidelity inventory** — the guardrails list from Step 5.
 6. **Recommended round count** — 3 rounds (light), 5 rounds (standard), 7 rounds (heavy). Base this on the number and severity of detected patterns, not on the document's length. Justify the recommendation in one paragraph.
@@ -137,6 +160,7 @@ Before handing off `discovery.md`, verify:
 - [ ] Language is detected and matching rule set is loaded.
 - [ ] User has answered the six constraint questions (or explicitly declined).
 - [ ] Every detected pattern has at least one verbatim quote with location.
+- [ ] Chinese context whitelist hits are marked `whitelisted: true` or `whitelisted: review`.
 - [ ] Patterns with zero hits in the document are not mentioned (no noise).
 - [ ] Technical-fidelity inventory is complete and byte-exact.
 - [ ] No proposed rewrites have leaked into `discovery.md`.

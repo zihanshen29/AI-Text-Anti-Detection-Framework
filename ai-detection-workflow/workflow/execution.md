@@ -27,6 +27,8 @@ Separating execution also makes rollback trivial. If Round 3 makes the detector 
 
 Each Layer 2 call handles **exactly one round**. The user invokes this layer N times across a project, once per round in `plan.md`, with a measurement checkpoint between each call.
 
+**The Layer 2 contract is universal.** Strict exact-string replacement applies in every execution context: real user runs, batch evaluations, sample dry runs, regression tests, and demonstrations. There is no mode in which Layer 2 permits creative paragraph-level rewriting. If an evaluator finds that the cost of producing a plan with exact before/after pairs is prohibitive for a given context, the correct response is to use the batch evaluation convention (`templates/batch_eval_output.md`), which condenses but does not eliminate the per-sample plan. The correct response is never to apply rewrites without a corresponding exact-string entry in some plan artifact.
+
 ```
 User: "Run Round 1."
   → Layer 2 executes Round 1
@@ -91,6 +93,8 @@ For each approved fix, in the order listed in `plan.md`:
 2. The BEFORE string must match exactly once. If it matches zero times, the fix was already applied or the pre-flight was wrong — stop and ask. If it matches more than once, the BEFORE string in `plan.md` was insufficiently specific — stop and ask Layer 1 to provide more surrounding context.
 3. Replace with the AFTER string exactly as written in `plan.md`. Do not "improve" it mid-application.
 4. After each successful replacement, verify the file still parses / compiles if applicable. For LaTeX, a full rebuild is overkill per-edit; a syntactic sanity check (balanced braces in the edit region) is sufficient.
+
+**Write-side encoding.** When using `str_replace` or equivalent edit tools on a non-ASCII document, write with explicit UTF-8 encoding. After all edits in this round are applied, re-read the file with explicit UTF-8 and confirm: (a) no new mojibake characters appeared, (b) Chinese characters in the edited regions render correctly. If either check fails, roll back the round and flag an encoding regression in `CHANGES_roundN.md` Section 4 Observations.
 
 **Forbidden during Step 4:**
 - Rewriting a proposed AFTER string because "this phrasing is better."
@@ -160,7 +164,7 @@ The audit round is not optional. Skipping it leaves the project in an unverified
 
 Layer 2 must never:
 
-- Apply a fix not listed in the current round of `plan.md`.
+- Apply a fix not listed in the current round of `plan.md` **or in the per-sample condensed plan of a batch evaluation report**. This applies in every execution context including offline evaluation, batch testing, and dry runs.
 - Apply a fix with a modified AFTER string from what `plan.md` specifies.
 - Continue to the next round without the user's explicit invocation.
 - Use fuzzy matching, regex with wildcards, or semantic similarity to locate a BEFORE string. Only exact literal match.

@@ -118,6 +118,9 @@ trailing newline; note for future planning.">
 
 **Spot-check results:**
 
+- Post-round UTF-8 re-read: pass / fail
+- Mojibake characters in edited regions: none / present (list)
+
 - Numerical value `<value>` at `<location>`: unchanged ✓
 - Citation `[<N>]` at `<location>`: unchanged ✓
 - Equation reference `<eq:N.M>` at `<location>`: unchanged ✓
@@ -162,11 +165,19 @@ trailing newline; note for future planning.">
   until this section is complete.
 -->
 
+### Measurement type (REQUIRED - pick one)
+
+- [ ] **External detector** - the user ran GPTZero / Turnitin / 知网 / 万方 / 维普 / 笔灵 / PaperPass / other named detector. Scores below are real.
+- [ ] **Offline rule-hit count** - no external detector run. Numbers below are rule-hit counts from the framework's own regex/grep rules. **These are NOT detector scores and must never be reported as such.**
+- [ ] **Hybrid** - some rounds had external detectors, some did not. Mark per detector below.
+
 ### Compile status
 
 - [ ] Document compiles without error
 - [ ] Visual sanity check of edited sections passed
 - **Compile notes:** <any warnings, formatting issues, manual fixes applied>
+
+### If "External detector"
 
 ### Detector A: <name, e.g., GPTZero>
 
@@ -198,6 +209,21 @@ trailing newline; note for future planning.">
 - **Threshold from plan:** <quote, e.g., "AI probability should drop by ≥ 10 pp">
 - **Observed delta:** <value>
 - **Verdict:** met | partially met | not met
+
+### If "Offline rule-hit count"
+
+| Rule | Pre-round hits | Post-round hits | Delta |
+|:---|:---:|:---:|:---:|
+| P-NN / V-NN / C-NN / S-NN | <X> | <Y> | <+/-Z> |
+
+**Disclaimer (copy verbatim into reports referencing this round):**
+"External detector status: not run for round N. The numbers above are rule-hit counts produced by the framework's own grep/regex rules. They are an *internal* signal of expected improvement and have no validated correlation to GPTZero / Turnitin / 知网 / etc. scores. Do not present these as AI-detection score reductions."
+
+### If "Hybrid"
+
+- Mark each detector table above as real external detector output or not run.
+- Mark each offline table above as internal rule-hit evidence only.
+- Reports referencing this round must clearly separate external detector scores from offline rule-hit counts.
 
 ### User notes
 

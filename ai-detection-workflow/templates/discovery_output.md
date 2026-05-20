@@ -22,6 +22,8 @@
 ## 1. Document Summary
 
 - **Path:** <relative or absolute path to the document being analysed>
+- **Encoding:** UTF-8 confirmed | other (specify)
+- **Mojibake scan:** pass | fail
 - **Language:** en | zh | mixed
   <!-- If mixed, quantify: "80% en (Chapters 1–6), 20% zh (Appendix C glossary)". -->
 - **Genre:** <academic thesis | research paper | blog post | report | book chapter | other>
@@ -83,6 +85,9 @@ en | zh | mixed
 - **Genre relevance for this document:** ★★★ | ★★ | ★ | ○
 - **Detector sensitivity for user's target(s):** <quote from rule library table
   for the detectors listed in §2 target>
+- **Context whitelist status:** not applicable | checked, no whitelist match | whitelisted: true | whitelisted: review
+  <!-- For Chinese C-NN/S-NN hits, apply Layer 0 Step 4.5. If whitelisted:true,
+       keep the evidence here but do not forward it as a mechanical Layer 1 fix. -->
 
 **Sample hits (verbatim with location):**
 
@@ -100,6 +105,22 @@ en | zh | mixed
 ### Pattern <next>: <name>
 
 …
+
+---
+
+## 3A. Context Whitelist / Exemption Log
+
+<!--
+  Required for Chinese or mixed-language documents. Record trigger hits that
+  were found but excluded from Layer 1 candidates because the surrounding
+  context makes them legitimate, fixed, technical, paired, or genre-dependent.
+  If no exemptions were found, write "None found."
+-->
+
+| Rule | Trigger | Matched context | Status | Reason | Forward to Layer 1? |
+|:---|:---|:---|:---|:---|:---:|
+| C-04 | `生态` | `生态环境` | whitelisted: true | fixed environmental term | no |
+| C-09 | `一方面` | `一方面...另一方面` | whitelisted: review | paired contrast; only rewrite as a pair | review |
 
 ---
 
@@ -231,6 +252,8 @@ Before the user approves this document:
 - [ ] Language and genre detection match the document.
 - [ ] External constraints captured accurately (user checks verbatim quotes).
 - [ ] Every listed pattern has at least one verbatim quote with location.
+- [ ] Chinese C-NN/S-NN hits have context whitelist status recorded.
+- [ ] Whitelisted Chinese hits are listed in §3A and are not forwarded as mechanical fixes.
 - [ ] No pattern with zero hits is included.
 - [ ] Novel patterns have clear enough quotes to be actionable.
 - [ ] Guardrail inventory is complete (numbers, citations, figures, code).

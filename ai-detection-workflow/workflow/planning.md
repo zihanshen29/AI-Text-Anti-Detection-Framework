@@ -40,7 +40,7 @@ Read `discovery.md` completely. Extract:
 
 If any section is missing or ambiguous, stop and send the user back to Layer 0 to fix it. Do not improvise.
 
-Also load (read-only, do not re-scan) the language-matched rule files: `rules/{en|zh}/*`. These contain canonical rewrite templates — Layer 1 uses them as starting points for before/after pairs, not as verdicts.
+Also load (read-only, do not re-scan the whole document) the language-matched rule files: `rules/{en|zh}/*`. These contain canonical rewrite templates — Layer 1 uses them as starting points for before/after pairs, not as verdicts. For Chinese documents, `rules/zh/context_whitelist.md` is mandatory and must be used before writing any C-NN or S-NN fix.
 
 ## Step 2 — Classify fixes by risk tier
 
@@ -128,11 +128,51 @@ AFTER (proposed):
 Rationale: <one sentence>
 Anti-regression check: <note whether this wording differs from v10/v12/prior versions>
 Technical-fidelity check: <list any numbers, citations, equation refs in the edit region>
+Context whitelist check: <Chinese only; note checked, whitelisted:true, whitelisted:review, or not applicable>
+Naturalness preflight: <pass / revise / open question, with one sentence>
+AFTER secondary scan: <pass / revise / open question, rules checked and any hits>
 ```
 
 For Tier C (block rewrite) fixes, the BEFORE block may be a full paragraph. The AFTER block is the full replacement paragraph. The Rationale section explains what structural change was made (e.g., "removed list-subject construction in sentence 2; normalized tense; broke three-sentence fragment chain into two sentences of differing length").
 
 **Exact-string discipline.** The BEFORE text must be character-for-character identical to the current document, including LaTeX commands, footnote markers, and line breaks. If the executor cannot find the BEFORE string verbatim in the document, the fix fails and the user is notified — no fuzzy matching. This is the single most common failure mode of one-shot rewriters; eliminate it here.
+
+### Step 4.1 — P0.4 Chinese context defense
+
+Before proposing an AFTER string for any Chinese C-NN or S-NN hit:
+
+1. Re-check the BEFORE string against `rules/zh/context_whitelist.md`.
+2. If the hit is `whitelisted: true`, do not create a mechanical fix. Record the item as deferred/intentional in the plan summary.
+3. If the hit is `whitelisted: review`, either write a phrase-level or pair-level fix with exact BEFORE/AFTER, or move it to Open Questions. Do not substring-replace the trigger.
+4. For paired structures such as `一方面...另一方面` or `不仅...而且`, the BEFORE string must include the full pair if the plan changes it.
+
+### Step 4.2 — P0.5 AFTER secondary rule scan
+
+After drafting every AFTER string, scan the AFTER itself for newly introduced AI signals before adding the fix to `plan.md`.
+
+This check must catch the failure mode where a fix removes one rule hit but creates another, such as replacing a phrase with a balanced P-08/C-09 structure or a new high-risk cliche.
+
+Efficiency rule: do not run the full rule library blindly for every fix. Scan the high-yield subset:
+
+- Rules already detected in this document by Layer 0.
+- The rule family of the original hit.
+- Universal high-frequency rules: English `P-01`, `P-04`, `P-06`, `P-08`, `P-12`, `P-16`, `P-19`, `V-01`, `V-02`, `V-03`, `V-08`, `V-11`, `V-19`, `V-20`; Chinese `C-01`, `C-04`, `C-05`, `C-06`, `C-08`, `C-09`, `C-12`, `C-14`, `S-01`, `S-04`, `S-06`, `S-11`, `S-12`, `S-14`.
+
+If the AFTER string hits any scanned rule:
+
+1. Rewrite the AFTER once and scan again.
+2. If the second version still hits a rule, either justify why the hit is factual/genre-legitimate or move the fix to Open Questions.
+3. Record the result in the fix block under `AFTER secondary scan`.
+
+### Step 4.3 — Naturalness and meaning preflight
+
+Each fix must pass three quick checks before it enters the plan:
+
+- **Grammar/naturalness:** the AFTER must not create an obvious malformed phrase or register break.
+- **Meaning/terminology:** the AFTER must not flatten a technical term, fixed compound, proper noun, or domain term.
+- **Genre fit:** the AFTER must match the genre recorded in `discovery.md`; a conversational replacement may be acceptable in an essay but not in a policy report.
+
+If any check fails, revise the AFTER or move the item to Open Questions. Do not leave the repair burden to Layer 2.
 
 ## Step 5 — Anti-regression check against prior versions
 
@@ -152,6 +192,8 @@ At the end of `plan.md`, declare how the user will measure between rounds:
 - Which score metric counts (AI probability, similarity, perplexity).
 - What counts as success for each round (e.g., "Round 1 should reduce AI probability by at least 10 points; if it doesn't, pause and diagnose before Round 2").
 - What the user records after each round (score, unexpected issues, any manual touch-ups).
+
+**If the user has no access to an external detector:** the round can still proceed using offline rule-hit counts as a proxy signal. In this case the plan must state `measurement_type: offline_rule_hits` and every round's success threshold must be defined in terms of rule-hit reduction (e.g., "Round 1 should reduce P-06 hit count by at least 5"), not detector-score reduction. The plan must NOT specify percentage drops in detector scores when no detector is being run.
 
 Without a measurement protocol the rounds are untestable. This is the second most common failure mode of humanizer frameworks — they rewrite but never verify.
 
@@ -190,6 +232,9 @@ Before handing off `plan.md`, verify:
 - [ ] Every Tier C fix has a full-paragraph BEFORE and AFTER.
 - [ ] No round mixes tiers.
 - [ ] Anti-regression checks are done for every proposed AFTER.
+- [ ] Context whitelist checks are done for every Chinese C-NN/S-NN fix.
+- [ ] AFTER secondary scans are done for every proposed AFTER against the high-yield rule subset.
+- [ ] Naturalness, meaning, and genre preflight checks are recorded for every fix.
 - [ ] The guardrails list is present and copied correctly from discovery.
 - [ ] The measurement protocol is explicit and testable.
 - [ ] File is saved as `plan.md` in the correct directory.

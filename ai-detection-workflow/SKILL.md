@@ -59,12 +59,15 @@ rules/
                                              任重道远/完美列举
     sentence_patterns.md         S-01..S-20  句法：句长均匀、长定语、被字句、
                                              "对...进行..."、欧化句式
+    context_whitelist.md         P0.4 中文上下文白名单：生态环境/控制闭环/
+                                             不仅仅/一方面...另一方面 等不替换场景
     detector_profiles.md         5 检测器：知网 AIGC、万方、维普、笔灵、
                                           PaperPass
 templates/                       skeletons each layer fills when producing output
   discovery_output.md            template for Layer 0 → discovery.md
   plan_output.md                 template for Layer 1 → plan.md
   changes_log.md                 template for Layer 2 → CHANGES_roundN.md
+  batch_eval_output.md           template for batch offline evaluation runs
 ```
 
 ### How the rule files are loaded
@@ -72,10 +75,10 @@ templates/                       skeletons each layer fills when producing outpu
 Layer 0 detects the document's language first, then loads the matching language folder. For a typical scan:
 
 - **English document** → load all three `rules/en/*` files. Run `sentence_patterns.md` (P-NN) structural checks first because they are the most interpretable signals; then run `tell_tale_phrases.md` (V-NN) as a vocabulary grep pass; consult `detector_profiles.md` only after the user names a target detector.
-- **Chinese document** → load all three `rules/zh/*` files. Run `ai_cliches.md` (C-NN) first — it is the highest-yield layer because Chinese detectors are vocabulary-dominated; then run `sentence_patterns.md` (S-NN) for residual syntactic patterns; consult `detector_profiles.md` when the target is named.
+- **Chinese document** → load `rules/zh/ai_cliches.md`, `rules/zh/sentence_patterns.md`, `rules/zh/context_whitelist.md`, and `rules/zh/detector_profiles.md`. Run `ai_cliches.md` (C-NN) first, then apply `context_whitelist.md` before forwarding hits to Layer 1, then run `sentence_patterns.md` (S-NN) for residual syntactic patterns; consult `detector_profiles.md` when the target is named.
 - **Mixed document** → load both folders. Identify which sections are which language and scan each with the matching ruleset.
 
-Never load all six rule files for a document that is monolingual — it doubles scan time and produces noise.
+Never load both language families for a document that is monolingual — it doubles scan time and produces noise. Loading the Chinese context whitelist with the Chinese rule family is required and does not count as cross-language loading.
 
 ## How to start
 
@@ -83,11 +86,22 @@ ALWAYS begin by loading `workflow/discovery.md`. Do not open `rules/` or `workfl
 
 If the user wants to skip ahead (e.g., "I already have a diagnosis, just plan the edits"), it is acceptable to enter at Layer 1 directly, but the user must produce or paste a `discovery.md` first. Never enter at Layer 2 without a `plan.md`.
 
+### Batch offline evaluation
+
+For multi-sample regression tests (e.g., evaluating framework behavior across 3-10 generated samples), use the batch template `templates/batch_eval_output.md` to consolidate per-sample results into one report instead of producing separate `discovery.md` / `plan.md` / `CHANGES_round*.md` file sets per sample.
+
+**Important:** batch mode does not relax Layer 2 discipline. Each sample's rewriting is still plan-driven exact string replacement. The batch template provides condensed per-sample plan and changes inline within the batch report; it does not authorize creative paragraph-level rewriting. The user has formally decided that Layer 2 stays strict in all execution contexts including batch evaluation. Evaluator agents that rewrite samples without a per-sample exact-string plan are producing invalid batch reports.
+
+Batch mode requires `measurement_type: offline_rule_hits` and produces no claim about external detector scores. Use the rubric defined in `meta/rubric/offline_rubric.md` for scoring.
+
 ## Core principles
 
 - **Discover before planning.** Never write a plan before confirming language, genre, constraints, and the actual patterns present in the document. Assumed patterns are the single biggest source of wasted rewrites.
 - **Ask, don't guess.** External constraints (school rules, journal guides, target detector) are worth one round-trip with the user. An incorrect premise here invalidates every downstream round.
 - **One round, one focus.** Each execution round should target one class of change (tense sweep, fragment merging, cliché removal, block rewrites). Mixing classes inside a round makes it impossible to tell which edit moved the detector score.
+- **Layer 2 is universally strict.** Exact before/after string replacement is the contract in every execution context. There is no offline mode, creative mode, batch mode, or dry-run mode that relaxes this. Batch evaluation uses condensed plan tables within `templates/batch_eval_output.md`, not creative rewriting.
+- **Chinese trigger words require context protection.** Before `生态`, `闭环`, `赋能`, `痛点`, `不仅`, `一方面`, `同时`, `进行`, or `化` suffixes become fixes, Layer 0 and Layer 1 must check `rules/zh/context_whitelist.md`.
+- **AFTER strings must be scanned.** Layer 1 must check each proposed AFTER against the detected rules and universal high-frequency rules so a fix does not remove one AI signal while introducing another.
 - **Measure between rounds.** After each round, the user compiles the document, runs the detector, and records the delta. Without measurement, rounds can silently make things worse.
 - **Technical fidelity is non-negotiable.** Equations, numbers, code identifiers, citation keys, figure/table labels, and reference lists must be byte-identical before and after every round. Any rewrite that would touch them gets flagged, not applied.
 - **Anti-regression.** If the target document has a prior version (v1, v2, …), new wording must differ from both the AI-flagged current version AND the older human version. Otherwise similarity scores rise while AI scores fall — a net loss.
@@ -112,6 +126,7 @@ The two languages do not share the same AI signal space, and the rule libraries 
 
 - **Vocabulary** — academic connectives (综上所述、由此可见), four-character cliché chains (全面提升、深入探讨), perfect enumeration (首先/其次/再次/最后), closing-sentence tropes (必将、任重道远、未来可期), commercial buzzwords (赋能、抓手、痛点、生态、闭环). These live in `rules/zh/ai_cliches.md` as C-01..C-18.
 - **Structural signals** play a smaller role than in English but still matter after the vocabulary layer is cleaned: uniform sentence length, long adnominal modifiers ("的" chains), passive-voice overuse, "它" pronoun repetition, Europeanized syntax. These live in `rules/zh/sentence_patterns.md` as S-01..S-20.
+- **Context whitelist** — Chinese trigger words must be checked against fixed phrases and technical/paired contexts before planning. These safeguards live in `rules/zh/context_whitelist.md` and are applied in both Layer 0 and Layer 1.
 
 The practical upshot: English rewrite plans almost always involve both the P and V layers in early rounds. Chinese rewrite plans benefit most from front-loading the C layer (cheap wins, highest detector weight) before moving to the S layer (higher-cost restructuring).
 

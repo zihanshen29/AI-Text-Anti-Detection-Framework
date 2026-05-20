@@ -123,6 +123,21 @@
 - If any of the above would be touched by the AFTER string: STOP, flag in Open
   Questions, do NOT include this fix.
 
+**Context whitelist check (Chinese C-NN/S-NN only):**
+- Status: not applicable | checked, no whitelist match | whitelisted: true | whitelisted: review
+- Source: `rules/zh/context_whitelist.md`
+- Decision: <planned fix allowed | dropped/deferred | pair-level rewrite required | open question>
+
+**Naturalness / meaning / genre preflight:**
+- Grammar and naturalness: pass | revise | open question
+- Meaning and terminology: pass | revise | open question
+- Genre fit: pass | revise | open question
+
+**AFTER secondary scan:**
+- Rule subset scanned: <discovered rules + original rule family + universal high-frequency subset>
+- Hits introduced by AFTER: none | <rule IDs and quoted phrase>
+- Decision: pass | AFTER rewritten once and passed | justified residual | moved to Open Questions
+
 #### Fix 1.2 — <short descriptor>
 
 <same structure>
@@ -240,6 +255,8 @@ guardrails preserved, detector score in target range.
 
 ## 5. Measurement Protocol
 
+- **Measurement type:** external_detector | offline_rule_hits | hybrid
+- **If offline_rule_hits:** all success thresholds in this protocol refer to rule-hit counts, not detector scores. This run will not produce a claim about real AI-detection score change.
 - **Detector(s):** <list, e.g., "GPTZero (primary), Turnitin AI (secondary)">
 - **Metrics recorded per round:** <e.g., "AI probability %, perplexity, burstiness score (if GPTZero), similarity score vs v10">
 - **Success threshold per round:**
@@ -288,6 +305,9 @@ Before the user approves this plan:
 - [ ] Every Tier C fix has full-paragraph BEFORE/AFTER per paragraph.
 - [ ] Anti-regression check is present for every fix.
 - [ ] Technical-fidelity check is present for every fix.
+- [ ] Chinese context whitelist check is present for every C-NN/S-NN fix.
+- [ ] Naturalness / meaning / genre preflight is present for every fix.
+- [ ] AFTER secondary scan is present for every fix.
 - [ ] Guardrails section was copied verbatim from discovery.
 - [ ] Measurement protocol is specific and testable per round.
 - [ ] Open Questions are answerable with a single user response.
