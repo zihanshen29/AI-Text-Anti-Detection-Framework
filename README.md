@@ -1,192 +1,269 @@
-# AI Detection Workflow
+# AI Text Anti-Detection Framework
 
-写在开头
-是什么？这个工作流是我为了降低文章的ai率自己跑出来的，目前只试了英文文本。实测效果：修改之后对比修改之前，读起来的“ai味”明显变少，“人味”更浓。
-如何使用？此工作流建议配合Claude Code或者Codex等智能体使用，文章建议使用latex格式，这两者结合可以将文章内容和格式完全交给ai来做，你只需要写提示词和审查。跑完这个工作流后，先把文章送检，查出来的报告把里面ai率较高的段落再重点过一遍，最多2遍后ai率即可达标。
+<p align="right">
+  <a href="#中文">中文</a> | <a href="#english">English</a>
+</p>
 
-<!-- What this is · 它是什么 -->
+<a id="中文"></a>
+<details open>
+<summary><strong>中文 README</strong></summary>
 
-**A structured, three-layer framework for reducing AI-detection signals in long-form documents** — theses, research papers, reports, long blog posts — **without** destroying technical content or leaving you guessing whether anything actually improved.
+## 这是什么
 
-**一个用于降低长文档 AI 检测信号的三层结构化框架** —— 适用于毕业论文、学术论文、研究报告、长篇博客等 —— **不破坏**原文的技术内容，也不让你猜测"到底有没有改好"。
+AI Text Anti-Detection Framework 是一套面向长文档的 AI 痕迹降低工作流。它不是“一键洗稿器”，而是把诊断、计划、执行和复盘拆开，让写作者能在保留事实、术语、引用和文体要求的前提下，逐轮减少文本里的 AI 味。
 
-Supports both English and Chinese. The two languages have independent rule libraries because the detectors behave differently.
+适用对象包括论文草稿、研究报告、技术说明、长篇博客和其他需要严肃编辑的文档。当前工作流同时支持中文和英文，并为两种语言维护了独立规则库，因为中文检测器更依赖套话词和固定搭配，英文检测器更关注句法节奏、并列结构和模板化表达。
 
-同时支持英文和中文。两种语言使用独立的规则库，因为检测器对中英文的工作机制并不相同。
+## 核心能力
 
----
+- 三层工作流：先发现问题，再制定逐轮修改计划，最后按计划执行。
+- 中英文分离规则：英文规则偏句式和词汇信号，中文规则偏套话、欧化句式和上下文保护。
+- 上下文保护：中文固定搭配如“生态环境”“数字化转型”“控制闭环”等不会被粗暴替换。
+- 二次扫描：每个 AFTER 改写结果都需要检查，避免修掉旧 AI 信号时引入新 AI 信号。
+- 批量评估模板：统一使用 35 分 rubric，并记录自然度、语义保真、异常样本和外部检测器状态。
+- 可回滚：每一轮修改都要求记录 BEFORE/AFTER 和 CHANGES 日志，便于审查、复盘和撤回。
 
-## Why this exists
+## 工作流
 
-Most "one-click AI humanizer" tools fail in predictable ways:
+### Layer 0: Discovery
 
-- They touch content that shouldn't be touched — numbers, equations, citations, proper nouns.
-- They miss external constraints (school style guides, journal house rules) because they never ask.
-- They introduce new AI patterns while fixing old ones.
-- They give you no way to measure whether the rewrite actually lowered the detector score.
+读取文档，判断语言、体裁和外部限制，扫描真正出现在文档里的 AI 信号，并标记不应替换的上下文。
 
-This framework **never rewrites in a single pass**. The work is split into three layers. You review between layers. You run the detector between rounds. If a round makes things worse, you can roll back exactly what changed.
+产出：`discovery.md`
 
----
+### Layer 1: Planning
 
-## The three layers
+把诊断结果转成可执行计划。每个修复项都必须包含精确的 BEFORE/AFTER、风险说明、语义检查、文体检查和 AFTER 二次扫描结果。
 
-### Layer 0 — Discovery
-Read the document, detect language and genre, **ask** about external constraints (school guide? previous drafts? which detector are you targeting?), and scan for AI patterns actually present in *your* document — not the generic checklist every humanizer uses.
+产出：`plan.md`
 
-→ produces `discovery.md` (you review)
+### Layer 2: Execution
 
-### Layer 1 — Planning
-Turn the diagnosis into a round-by-round plan. Every fix gets an exact **before/after** pair, an anti-regression check against your earlier drafts (so you don't accidentally drift back toward a version that would raise similarity scores), and a technical-fidelity check so no citation or equation reference gets disturbed.
+按轮次执行修改。执行层只能做计划中批准的字面替换，不允许临场发挥。每一轮结束后记录改动、运行检测或人工评估，再决定是否进入下一轮。
 
-→ produces `plan.md` (you approve)
+产出：`CHANGES_roundN.md`
 
-### Layer 2 — Execution
-Apply one round at a time. Strict literal string replacement — the agent is forbidden from improvising. Between rounds, you compile the document, run the detector, and record the score. If the score dropped, continue. If not, pause and diagnose.
+## 快速开始
 
-→ produces `CHANGES_round1.md`, `CHANGES_round2.md`, … (one per round)
+### 在 Claude Code、Codex、Cursor 或其他 agent 中使用
 
----
+1. 将本仓库克隆到本地。
+2. 让 agent 读取 `ai-detection-workflow/SKILL.md`。
+3. 上传或粘贴待处理文档，并说明目标检测器、文体要求和禁止修改的内容。
+4. 先运行 Layer 0，确认 `discovery.md`。
+5. 再运行 Layer 1，审查并批准 `plan.md`。
+6. 最后按轮运行 Layer 2，每轮结束后记录检测分数或人工评估结果。
 
-## What a session looks like
+示例提示：
 
-```
-You:     Here's my thesis. I need to lower the AI score.
-
-Claude:  Before I start, a few questions:
-         - Which detector did you use? What score did it give?
-         - Is there a school style guide or thesis manual?
-         - Do you have earlier drafts (v1, v2...)?
-         - Anything I must not change?
-
-You:     GPTZero, 87%. Here's the Heriot-Watt guide.
-         Earlier drafts v10 and v12 attached. Don't touch 
-         equations or citations.
-
-Claude:  [Layer 0 scans the document]
-         Here's discovery.md. I found 14 fragment sentences,
-         22 tense slips that violate your school guide, 6 AI 
-         cliché phrases. Recommended 5 rounds. Approve?
-
-You:     Looks right. Go.
-
-Claude:  [Layer 1 plans]
-         Here's plan.md with 42 fixes across 5 rounds. Every 
-         fix has a verbatim before/after, checked against 
-         v10 and v12. Review?
-
-You:     Approved.
-
-Claude:  [Layer 2 runs Round 1]
-         Round 1 complete. 12 fixes applied. Compile, run 
-         the detector, fill in the Measurement section of 
-         CHANGES_round1.md, then tell me when to start Round 2.
-
-You:     [compiles, runs GPTZero: 87% → 64%]
-         Good drop. Run Round 2.
-
-...
+```text
+请使用 ai-detection-workflow 处理这篇中文研究报告。
+目标是降低 AI 痕迹，但不要改变事实、引用、专有名词和数据。
+先只做 Layer 0 discovery，不要直接改正文。
 ```
 
----
+### 手动使用 prompt
 
-## Structure
+1. 使用 `workflow/discovery.md` 作为第一轮系统提示。
+2. 审查 discovery 后，使用 `workflow/planning.md` 生成修改计划。
+3. 批准计划后，使用 `workflow/execution.md` 按轮执行。
+4. 每轮后填写 `templates/changes_log.md`，必要时使用 `templates/batch_eval_output.md` 做批量评估。
 
-```
+## 项目结构
+
+```text
 ai-detection-workflow/
-├── SKILL.md                      # entry point, skill metadata
+├── SKILL.md
 ├── workflow/
-│   ├── discovery.md              # Layer 0 prompt
-│   ├── planning.md               # Layer 1 prompt
-│   └── execution.md              # Layer 2 prompt
+│   ├── discovery.md
+│   ├── planning.md
+│   └── execution.md
 ├── rules/
-│   ├── en/                       # English — syntactic + vocabulary signals
-│   │   ├── sentence_patterns.md  # P-01..P-20 structural patterns
-│   │   ├── tell_tale_phrases.md  # V-01..V-45 vocabulary
-│   │   └── detector_profiles.md  # GPTZero, Turnitin, Originality, ...
-│   └── zh/                       # 中文 —— 词汇套语为主，句法为辅
-│       ├── ai_cliches.md         # C-01..C-18 套话词表
-│       ├── sentence_patterns.md  # S-01..S-20 句法模式
-│       └── detector_profiles.md  # 知网、万方、维普、笔灵、PaperPass
-└── templates/                    # output file skeletons
-    ├── discovery_output.md
-    ├── plan_output.md
-    └── changes_log.md
+│   ├── en/
+│   │   ├── detector_profiles.md
+│   │   ├── sentence_patterns.md
+│   │   └── tell_tale_phrases.md
+│   └── zh/
+│       ├── ai_cliches.md
+│       ├── context_whitelist.md
+│       ├── detector_profiles.md
+│       └── sentence_patterns.md
+├── templates/
+│   ├── batch_eval_output.md
+│   ├── changes_log.md
+│   ├── discovery_output.md
+│   └── plan_output.md
+└── meta/
+    ├── prompts/
+    ├── provider_articles/
+    ├── reports/
+    └── rubric/
 ```
 
-The English and Chinese rule libraries are deliberately **asymmetric**. English AI detectors mostly weight syntactic features (burstiness, em-dash density, parallel structure), so `rules/en/` is pattern-heavy. Chinese detectors mostly weight fixed vocabulary (赋能/抓手/综上所述 …), so `rules/zh/` is word-list-heavy. Forcing the two into the same format would produce a worse skill for both languages.
+## 评估标准
+
+离线评估默认使用 35 分制：
+
+- AI 信号下降：5 分
+- 可读性与自然度：5 分
+- 语义与事实保真：5 分
+- 体裁适配：5 分
+- 结构与逻辑：5 分
+- 修改可控性：5 分
+- 检测与复盘记录：5 分
+
+批量报告必须注明是否运行外部检测器。如果未运行 GPTZero、Turnitin、Originality.ai、知网、万方等外部检测器，报告只能称为离线评估，不能伪装成检测器结果。
+
+## 状态
+
+- 已完成三层工作流。
+- 已完成中英文规则库。
+- 已加入中文上下文白名单。
+- 已加入 AFTER 二次扫描要求。
+- 已加入批量评估模板和 35 分 rubric。
+- 仍需更多真实文档和真实检测器结果来继续校准规则权重。
+
+## 使用边界
+
+本项目用于编辑和复核文本，尤其适合处理被过度检测器误伤的人工写作，或对 AI 辅助草稿进行负责任的人工修订。它不能替代学术诚信要求，也不能让使用者规避学校、期刊或机构对 AI 使用披露的规定。
+
+如果你的机构要求声明 AI 辅助，请按规定声明。
+
+## 许可证
+
+MIT
+
+</details>
 
 ---
 
-## How to use it · 如何使用
+<a id="english"></a>
+<details>
+<summary><strong>English README</strong></summary>
 
-This is an [Anthropic Skill](https://docs.claude.com/en/docs/claude-code/skills). You can also drop the individual prompt files into Cursor, Codex, Claude Code, Cline, or any other agent that accepts markdown prompts.
+## What This Is
 
-本项目是一个 [Anthropic Skill](https://docs.claude.com/en/docs/claude-code/skills)。你也可以把里面的 prompt 文件直接放进 Cursor、Codex、Claude Code、Cline 或任何能读 markdown prompt 的 agent 里使用。
+AI Text Anti-Detection Framework is a structured workflow for reducing AI-like signals in long-form documents. It is not a one-click paraphraser. It separates diagnosis, planning, execution, and review so writers can reduce machine-like phrasing without damaging facts, terminology, citations, or genre requirements.
 
-### With Claude.ai or Claude Code · 在 Claude.ai 或 Claude Code 里使用
+It is intended for theses, research papers, technical reports, long-form essays, blog posts, and other documents that need careful editing. The framework supports both Chinese and English with separate rule libraries because Chinese detectors tend to react more strongly to fixed phrases and cliches, while English detectors tend to emphasize syntax, rhythm, parallelism, and templated phrasing.
 
-1. Clone this repo into your skill directory.
-2. Start a chat: *"I want to lower the AI detection score on this document"* or *"帮我降低这篇论文的 AI 率"*.
-3. Upload the document. Claude loads Layer 0 automatically and asks you the discovery questions.
+## Key Features
 
-——
+- Three-layer workflow: discover the problem, plan controlled fixes, then execute round by round.
+- Separate Chinese and English rules: English rules focus on sentence patterns and tell-tale phrases; Chinese rules focus on cliches, Europeanized syntax, and context-sensitive terms.
+- Context protection: fixed Chinese collocations such as "生态环境", "数字化转型", and "控制闭环" are protected from blunt replacement.
+- Secondary scan: every AFTER string must be checked so a fix does not introduce a new AI signal.
+- Batch evaluation template: uses a 35-point rubric with naturalness, semantic fidelity, outlier handling, and external-detector status.
+- Reviewable changes: each round records BEFORE/AFTER pairs and a CHANGES log, making the process auditable and reversible.
 
-1. 把本仓库 clone 到你的 skill 目录下。
-2. 开始新对话："I want to lower the AI detection score on this document" 或 "帮我降低这篇论文的 AI 率"。
-3. 上传文档。Claude 会自动加载 Layer 0，向你提问若干诊断问题。
+## Workflow
 
-### Manually (with any agent) · 手动使用（任意 agent）
+### Layer 0: Discovery
 
-1. Start with `workflow/discovery.md` as the system prompt.
-2. After the agent produces `discovery.md`, start a new conversation with `workflow/planning.md` and paste in the approved discovery.
-3. For each round, open a new conversation with `workflow/execution.md` and paste in the approved plan plus "run Round N".
+Read the document, identify language, genre, external constraints, and the AI-signal patterns that actually appear in the text. Also mark contexts that should be exempt from replacement.
 
-——
+Output: `discovery.md`
 
-1. 用 `workflow/discovery.md` 作为 system prompt，上传文档开始第一轮对话。
-2. Agent 产出 `discovery.md` 后，开一段新对话，这次用 `workflow/planning.md` 作为 system prompt，把上一步确认好的 discovery 贴进去。
-3. 每一个执行轮次都新开一段对话，用 `workflow/execution.md` 作为 system prompt，粘入已批准的 `plan.md`，并指定 "run Round N"。
+### Layer 1: Planning
 
-### Important: one round per invocation · 关键：一次对话只跑一轮
+Turn the diagnosis into a controlled plan. Every fix must include exact BEFORE/AFTER text, risk notes, semantic checks, genre checks, and a secondary scan of the AFTER string.
 
-Between rounds you **must** compile the document, run the detector, record the score, and only then invoke the next round. This measurement checkpoint is the difference between a framework that works and one that pretends to.
+Output: `plan.md`
 
-每一轮之间你**必须**先编译文档、跑检测器、记录分数，**然后**再启动下一轮。这个测量断点是本框架与"一键降 AI"工具最核心的区别 —— 没有它，你无法判断改写到底是变好了还是变差了。
+### Layer 2: Execution
 
----
+Apply approved changes one round at a time. The execution layer is restricted to the approved literal replacements and must not improvise. After each round, record the changes, run detection or manual evaluation, and decide whether another round is needed.
 
-## Supported detectors
+Output: `CHANGES_roundN.md`
 
-**English:** GPTZero · Turnitin AI · Originality.ai · Pangram · ZeroGPT · Copyleaks
+## Quick Start
 
-**中文:** 知网 AIGC · 万方 AIGC · 维普 · 笔灵 · PaperPass
+### Use with Claude Code, Codex, Cursor, or another agent
 
-Rules are organized so you can prioritize by target detector. If you only care about GPTZero, Layer 1 will weight the fixes that GPTZero specifically flags. If you care about 知网, it picks a different priority order.
+1. Clone this repository.
+2. Ask the agent to read `ai-detection-workflow/SKILL.md`.
+3. Upload or paste the document, then specify the target detector, style constraints, and content that must not be changed.
+4. Run Layer 0 first and review `discovery.md`.
+5. Run Layer 1 next and approve `plan.md`.
+6. Run Layer 2 round by round, recording detector scores or manual evaluation results after each round.
 
----
+Example prompt:
+
+```text
+Use ai-detection-workflow on this English technical report.
+The goal is to reduce AI-like signals without changing facts, citations, terms, or data.
+Start with Layer 0 discovery only. Do not rewrite the document yet.
+```
+
+### Manual prompt workflow
+
+1. Use `workflow/discovery.md` as the first system prompt.
+2. After reviewing discovery, use `workflow/planning.md` to create the fix plan.
+3. After approving the plan, use `workflow/execution.md` to run each round.
+4. After each round, fill in `templates/changes_log.md`; use `templates/batch_eval_output.md` for batch evaluation when needed.
+
+## Repository Structure
+
+```text
+ai-detection-workflow/
+├── SKILL.md
+├── workflow/
+│   ├── discovery.md
+│   ├── planning.md
+│   └── execution.md
+├── rules/
+│   ├── en/
+│   │   ├── detector_profiles.md
+│   │   ├── sentence_patterns.md
+│   │   └── tell_tale_phrases.md
+│   └── zh/
+│       ├── ai_cliches.md
+│       ├── context_whitelist.md
+│       ├── detector_profiles.md
+│       └── sentence_patterns.md
+├── templates/
+│   ├── batch_eval_output.md
+│   ├── changes_log.md
+│   ├── discovery_output.md
+│   └── plan_output.md
+└── meta/
+    ├── prompts/
+    ├── provider_articles/
+    ├── reports/
+    └── rubric/
+```
+
+## Evaluation Rubric
+
+Offline evaluation uses a 35-point rubric:
+
+- AI-signal reduction: 5 points
+- Readability and naturalness: 5 points
+- Semantic and factual fidelity: 5 points
+- Genre fit: 5 points
+- Structure and logic: 5 points
+- Change controllability: 5 points
+- Measurement and review record: 5 points
+
+Batch reports must state whether external detectors were run. If GPTZero, Turnitin, Originality.ai, CNKI, Wanfang, or similar detectors were not run, the result must be described as offline evaluation rather than an external detector score.
 
 ## Status
 
-Work in progress. Completed so far:
+- Three-layer workflow is implemented.
+- Chinese and English rule libraries are implemented.
+- Chinese context whitelist is included.
+- AFTER-string secondary scanning is required.
+- Batch evaluation template and 35-point rubric are included.
+- More real documents and real detector reports are still needed to calibrate rule weights.
 
-- [x] Three-layer workflow prompts (`SKILL.md` + `workflow/*`)
-- [x] Output templates (3 files)
-- [x] English rules — sentence patterns (P-01..P-20), tell-tale phrases (V-01..V-45), detector profiles (6 detectors)
-- [x] Chinese rules — AI clichés (C-01..C-18), sentence patterns (S-01..S-20), detector profiles (5 detectors)
-- [ ] End-to-end validation on a real document
-- [ ] Iteration based on real-run feedback
+## Responsible Use
 
----
+This project is for text editing and review, especially when human writing is over-flagged by unreliable detectors or when AI-assisted drafts need responsible human revision. It does not replace academic integrity rules and does not remove any disclosure obligations required by a school, journal, employer, or institution.
 
-## What this is NOT for
-
-This tool is for writers whose **legitimately human-written content** was flagged by overactive detectors, or for revising **AI-drafted content** that needs to preserve technical accuracy (e.g., a researcher who used AI as a drafting aid but needs to submit work that reflects their own technical judgment).
-
-It is **not** a tool for academic dishonesty. Using it does not remove your responsibility to follow the academic integrity rules of your institution. If your university requires you to declare AI assistance, declare it.
-
----
+If your institution requires AI-use disclosure, disclose it.
 
 ## License
 
 MIT
+
+</details>
