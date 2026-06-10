@@ -278,7 +278,7 @@
 
 ### T17 — 全仓一致性扫描
 
-**Task status:** pending
+**Task status:** done
 
 **改动 / 验收（即检查清单）：**
 - `grep -rn "0-36" ai-detection-workflow/` → 仅出现在 Erratum 引用原文处。
@@ -289,7 +289,7 @@
 
 ### T18 — BrainMem 记忆同步（机器侧操作，非仓库内容）
 
-**Task status:** pending
+**Task status:** done
 
 **目的：** 记忆库中本项目页已过时（记录停在 v1.0.0 / f71f071，实际已 v1.1.0 / b3aa521），本次升级完成后一并刷新。
 

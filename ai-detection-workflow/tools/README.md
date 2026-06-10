@@ -61,3 +61,17 @@ python tools\overlap_check.py --current tools\testdata\overlap_a.md --prior tool
 ## `tool_common.py`
 
 Shared helper module for UTF-8/mojibake preflight, constrained YAML loading, language inference, and Markdown table rendering. It is imported by the command-line tools and is not intended to be run directly.
+
+## Test Data
+
+`tools/testdata/` contains deterministic fixtures used by the self-checks:
+
+- `preflight_plan_sample.md`
+- `preflight_doc_once.md`
+- `preflight_doc_zero.md`
+- `preflight_doc_multi.md`
+- `guardrails_source.md`
+- `guardrails_rewrite_pass.md`
+- `guardrails_rewrite_number_fail.md`
+- `overlap_a.md`
+- `overlap_unrelated.md`
