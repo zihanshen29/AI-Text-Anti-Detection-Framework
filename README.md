@@ -22,6 +22,8 @@ AI Text Anti-Detection Framework 是一套面向长文档的 AI 痕迹降低工�
 - 二次扫描：每个 AFTER 改写结果都需要检查，避免修掉旧 AI 信号时引入新 AI 信号。
 - 批量评估模板：统一使用 35 分 rubric，并记录自然度、语义保真、异常样本和外部检测器状态。
 - 可回滚：每一轮修改都要求记录 BEFORE/AFTER 和 CHANGES 日志，便于审查、复盘和撤回。
+- 确定性离线工具：`ai-detection-workflow/tools/` 提供规则命中扫描、结构指标、BEFORE 预检、保真校验和反回归重叠度脚本，只做离线统计，不模拟任何检测器。
+- AFTER 侧防线：中文替换黑名单与英文替换守则收录实测失败的替换词，配合计划级多样性检查，防止同类修复收敛成单一机械替换。
 
 ## 工作流
 
@@ -155,6 +157,8 @@ It is intended for theses, research papers, technical reports, long-form essays,
 - Secondary scan: every AFTER string must be checked so a fix does not introduce a new AI signal.
 - Batch evaluation template: uses a 35-point rubric with naturalness, semantic fidelity, outlier handling, and external-detector status.
 - Reviewable changes: each round records BEFORE/AFTER pairs and a CHANGES log, making the process auditable and reversible.
+- Deterministic offline tools: `ai-detection-workflow/tools/` ships rule-hit scanning, structural metrics, BEFORE preflight, guardrail fidelity diffs, and anti-regression overlap checks — offline statistics only, never detector simulation.
+- AFTER-side defenses: a Chinese replacement blacklist and English replacement guidance record replacements that failed in real runs, and a plan-level diversity check keeps fixes from collapsing into one mechanical substitute.
 
 ## Workflow
 

@@ -264,7 +264,7 @@
 
 ### T16 — README 双语同步更新
 
-**Task status:** done
+**Task status:** done（更正：Phase 3 提交中实际未改 README，复审时发现并在 2026-06-10 复审跟进提交中补齐，中英两节各增两条）
 
 **目的：** 对外说明面与新能力一致。
 
@@ -335,3 +335,4 @@ v1.0.0/f71f071 is superseded.
 - 重新生成 gemini/topic_04 干净英文样本，凑足 16 样本批次。
 - 用 T2/T3 工具对下一次真实文档运行做一次"工具口径 vs 人工口径"标定。
 - 散文规则文件与 rules.yaml 的一致性 lint（可作为 tools/ 的后续脚本）。
+- 各工具增加 `--output <file>` 直写 UTF-8 文件参数，绕开 Windows PowerShell 5.1 重定向二次转码问题（2026-06-10 复审发现）。

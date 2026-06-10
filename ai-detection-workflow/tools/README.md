@@ -8,6 +8,11 @@ These tools provide deterministic offline checks for the workflow. They do not c
 - `1`: check completed and found rule hits or guardrail/overlap findings.
 - `2`: runtime or preflight error, including unreadable files, invalid UTF-8, or encoding/language anomalies.
 
+## Paths and Encoding
+
+- Relative input paths resolve against the `ai-detection-workflow/` root (the directory containing `tools/`), not the caller's working directory. `meta/...` and `tools/testdata/...` therefore work from any cwd; cwd-relative shortcuts like `testdata/...` from inside `tools/` do not.
+- stdout/stderr are forced to UTF-8, so the tools always emit UTF-8 bytes regardless of console codepage. Redirection is byte-clean in cmd.exe, Git Bash, and PowerShell 7+. Windows PowerShell 5.1 re-encodes `>` output with the console codepage and will mangle Chinese rule names; there, run `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8` first, or redirect via cmd/bash.
+
 ## `scan_rules.py`
 
 Counts machine-readable `rules/<lang>/rules.yaml` literal and regex hits in one file or a source/rewrite pair. Manual structural rules are listed but not counted.

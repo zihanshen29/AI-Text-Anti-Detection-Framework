@@ -25,6 +25,21 @@ class ToolError(Exception):
     """Error that should be reported with exit code 2."""
 
 
+def force_utf8_stdio() -> None:
+    """Force UTF-8 stdout/stderr so output does not depend on the console codepage (e.g. cp936 on Windows)."""
+
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8")
+            except (ValueError, OSError):
+                pass
+
+
+# Applied at import time so every CLI tool inherits stable UTF-8 output.
+force_utf8_stdio()
+
+
 def repo_path(value: str | Path) -> Path:
     path = Path(value)
     if path.is_absolute():
