@@ -55,7 +55,7 @@ The rules are candidates, not verdicts. Layer 0 must verify each one against the
 - **Why flagged:** LLMs trained on Internet English over-use em-dash as a rhythmic device. Human academic writers prefer commas, semicolons, or parenthetical structure. Pangram specifically weights this.
 - **Strongest detectors:** Pangram, GPTZero.
 - **False-positive contexts:** creative nonfiction, fiction, personal essays — em-dash is legitimately common here.
-- **Fix direction:** Replace with commas for parenthetical asides, semicolons for independent-clause joins, or period + new sentence for emphasis. Aim for fewer than one per 500 words in academic prose.
+- **Fix direction:** Replace with commas for parenthetical asides, semicolons for independent-clause joins, or period + new sentence for emphasis. Aim for fewer than one per 500 words in academic prose. For AFTER-side replacement diversity and the spaced-hyphen prohibition, also check `rules/en/replacement_guidance.md`.
 
 ### P-05: Tricolon overuse (triple parallel structure)
 

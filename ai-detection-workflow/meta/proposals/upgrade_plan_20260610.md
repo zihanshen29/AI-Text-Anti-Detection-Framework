@@ -150,7 +150,7 @@
 
 ### T8 — 新建 `rules/zh/replacement_blacklist.md`
 
-**Task status:** pending
+**Task status:** done
 
 **目的：** 把 5-20 实测的 AFTER 侧失败固化为未来运行必加载的规则文件。
 
@@ -169,7 +169,7 @@
 
 ### T9 — 新建 `rules/en/replacement_guidance.md`
 
-**Task status:** pending
+**Task status:** done
 
 **目的：** 英文侧对称回流（5-20 英文实测的失败模式）。
 
@@ -183,7 +183,7 @@
 
 ### T10 — 修订 `rules/zh/ai_cliches.md` C-04 与 `rules/zh/context_whitelist.md`
 
-**Task status:** pending
+**Task status:** done
 
 **目的：** 消除规则库主动推荐已被实测否定的替换；把白名单的扩充规则延伸到 AFTER 侧。
 
@@ -195,7 +195,7 @@
 
 ### T11 — `workflow/planning.md` + `templates/plan_output.md`：黑名单接入与计划级替换多样性检查
 
-**Task status:** pending
+**Task status:** done
 
 **目的：** 让 T8/T9 真正进入执行路径；堵住"逐条扫描看不见跨条目单调性"的缺口（12 个 em-dash 全换 `" - "` 这类问题，P0.5 逐条扫描永远不会报警）。
 
@@ -209,7 +209,7 @@
 
 ### T12 — planning.md 高频子集改为派生自 `frequency` 字段
 
-**Task status:** pending
+**Task status:** done
 
 **目的：** 消除 Step 4.2 硬编码清单与规则库演化失同步的风险。
 

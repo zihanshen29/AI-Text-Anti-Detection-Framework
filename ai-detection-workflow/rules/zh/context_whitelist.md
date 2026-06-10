@@ -48,4 +48,9 @@ Before writing any BEFORE/AFTER pair for a Chinese C-NN or S-NN hit:
 
 ## Expansion Rule
 
-When a batch evaluation finds a new context-sensitive failure, add the failed trigger and safe context here before adding more replacement candidates to `ai_cliches.md` or `sentence_patterns.md`.
+When a batch evaluation finds a new context-sensitive failure, route it by side before adding more replacement candidates:
+
+- **BEFORE-side failures** go into this whitelist table when the original trigger is legitimate in context and should not become a mechanical fix.
+- **AFTER-side failures** go into `rules/zh/replacement_blacklist.md` when a proposed replacement creates malformed wording, register downgrade, or a new AI-like phrase.
+
+Both updates must happen before adding new replacement candidates to `ai_cliches.md` or `sentence_patterns.md`.

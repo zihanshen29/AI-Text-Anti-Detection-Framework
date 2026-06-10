@@ -132,6 +132,7 @@
 - Grammar and naturalness: pass | revise | open question
 - Meaning and terminology: pass | revise | open question
 - Genre fit: pass | revise | open question
+- Replacement blacklist/guidance: not applicable | checked, no prohibited/disfavored hit | hard-prohibited hit rewritten | disfavored hit justified | open question
 
 **AFTER secondary scan:**
 - Rule subset scanned: <discovered rules + original rule family + universal high-frequency subset>
@@ -240,6 +241,7 @@ guardrails preserved, detector score in target range.
   List any AFTER string whose token overlap with a prior version exceeded 40%
   over any 10-word window. For each, note whether Layer 1 rewrote it a second
   time, and the current status.
+  Also record the plan-level replacement diversity check from planning.md Step 4.4.
 -->
 
 **Fixes requiring second rewrite to avoid drifting toward prior version:**
@@ -250,6 +252,12 @@ guardrails preserved, detector score in target range.
 **Fixes where user must choose between two rewrites:** <list in Open Questions>
 
 **If no regressions occurred:** "All AFTER strings pass the anti-regression threshold (<40% overlap with any prior version over 10-word windows)."
+
+### Replacement Diversity Check
+
+| Rule family | Fix count | Distinct replacements | Single replacement share | Handling note |
+|:---|:---:|:---:|:---:|:---|
+| <P-04 / C-04 / ...> | <N> | <N> | <X%> | <diversified | justified | not applicable> |
 
 ---
 
@@ -307,7 +315,9 @@ Before the user approves this plan:
 - [ ] Technical-fidelity check is present for every fix.
 - [ ] Chinese context whitelist check is present for every C-NN/S-NN fix.
 - [ ] Naturalness / meaning / genre preflight is present for every fix.
+- [ ] Replacement blacklist/guidance check is present where applicable.
 - [ ] AFTER secondary scan is present for every fix.
+- [ ] Replacement diversity summary is present in §4 for any family with four or more fixes.
 - [ ] Guardrails section was copied verbatim from discovery.
 - [ ] Measurement protocol is specific and testable per round.
 - [ ] Open Questions are answerable with a single user response.

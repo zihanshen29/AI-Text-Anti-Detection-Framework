@@ -129,7 +129,7 @@ Rationale: <one sentence>
 Anti-regression check: <note whether this wording differs from v10/v12/prior versions>
 Technical-fidelity check: <list any numbers, citations, equation refs in the edit region>
 Context whitelist check: <Chinese only; note checked, whitelisted:true, whitelisted:review, or not applicable>
-Naturalness preflight: <pass / revise / open question, with one sentence>
+Naturalness preflight: <pass / revise / open question, with one sentence; include replacement blacklist/guidance checks where applicable>
 AFTER secondary scan: <pass / revise / open question, rules checked and any hits>
 ```
 
@@ -156,7 +156,7 @@ Efficiency rule: do not run the full rule library blindly for every fix. Scan th
 
 - Rules already detected in this document by Layer 0.
 - The rule family of the original hit.
-- Universal high-frequency rules: English `P-01`, `P-04`, `P-06`, `P-08`, `P-12`, `P-16`, `P-19`, `V-01`, `V-02`, `V-03`, `V-08`, `V-11`, `V-19`, `V-20`; Chinese `C-01`, `C-04`, `C-05`, `C-06`, `C-08`, `C-09`, `C-12`, `C-14`, `S-01`, `S-04`, `S-06`, `S-11`, `S-12`, `S-14`.
+- Universal high-frequency rules: take every rule with `frequency: high` from `rules/<lang>/rules.yaml`. Current snapshot, with YAML as the source of truth: English `P-01`, `P-04`, `P-06`, `P-08`, `P-12`, `P-16`, `P-19`, `V-01`, `V-02`, `V-03`, `V-08`, `V-11`, `V-19`, `V-20`; Chinese `C-01`, `C-04`, `C-05`, `C-06`, `C-08`, `C-09`, `C-12`, `C-14`, `S-01`, `S-04`, `S-06`, `S-11`, `S-12`, `S-14`.
 
 If the AFTER string hits any scanned rule:
 
@@ -171,8 +171,15 @@ Each fix must pass three quick checks before it enters the plan:
 - **Grammar/naturalness:** the AFTER must not create an obvious malformed phrase or register break.
 - **Meaning/terminology:** the AFTER must not flatten a technical term, fixed compound, proper noun, or domain term.
 - **Genre fit:** the AFTER must match the genre recorded in `discovery.md`; a conversational replacement may be acceptable in an essay but not in a policy report.
+- **Replacement blacklist/guidance:** Chinese AFTER strings must be checked against `rules/zh/replacement_blacklist.md`; English AFTER strings must be checked against `rules/en/replacement_guidance.md`. Hard-prohibited replacement products must be rewritten. Disfavored Chinese replacements require a one-sentence justification at the fix site.
 
 If any check fails, revise the AFTER or move the item to Open Questions. Do not leave the repair burden to Layer 2.
+
+### Step 4.4 — Replacement diversity check (plan-level)
+
+After all fix blocks are drafted, aggregate AFTER strings by rule family. If a family has four or more fixes and more than 50% of them use the same replacement word or the same sentence structure, diversify the replacements or justify the convergence in `plan.md` §4.
+
+Record the result with the anti-regression summary so Layer 2 sees the plan-level constraint, not only per-fix checks.
 
 ## Step 5 — Anti-regression check against prior versions
 
@@ -235,6 +242,8 @@ Before handing off `plan.md`, verify:
 - [ ] Context whitelist checks are done for every Chinese C-NN/S-NN fix.
 - [ ] AFTER secondary scans are done for every proposed AFTER against the high-yield rule subset.
 - [ ] Naturalness, meaning, and genre preflight checks are recorded for every fix.
+- [ ] Chinese replacement blacklist / English replacement guidance checks are recorded where applicable.
+- [ ] Replacement diversity check is recorded in `plan.md` §4 for any rule family with four or more fixes.
 - [ ] The guardrails list is present and copied correctly from discovery.
 - [ ] The measurement protocol is explicit and testable.
 - [ ] File is saved as `plan.md` in the correct directory.
