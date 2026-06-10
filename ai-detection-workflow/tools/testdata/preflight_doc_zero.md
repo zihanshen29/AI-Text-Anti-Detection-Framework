@@ -1,0 +1,3 @@
+# Fixture
+
+Alpha beta delta.

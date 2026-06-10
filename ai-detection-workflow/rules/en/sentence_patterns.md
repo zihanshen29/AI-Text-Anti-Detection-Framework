@@ -2,6 +2,7 @@
 
 > **Consumed by:** Layer 0 (Discovery) during Step 4 pattern scanning.
 > **Not to be read by:** Layer 2 (Execution) — executors take exact before/after pairs from `plan.md`, not rules.
+> **Maintenance:** When any **Detect** rule changes, update `rules/en/rules.yaml` in the same commit.
 
 ## How to read this file
 

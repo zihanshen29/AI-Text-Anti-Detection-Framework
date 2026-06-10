@@ -2,6 +2,7 @@
 
 > **由 Layer 0 (Discovery) 在 Step 4 扫描时加载。**
 > **Layer 2 (Execution) 不读此文件** —— 执行层只用 `plan.md` 里的 exact before/after。
+> **维护说明：** 修改任何 **词表** 时，必须在同一提交中同步更新 `rules/zh/rules.yaml`。
 
 ## 为什么中文规则库以词汇为主，英文规则库以句法为主
 

@@ -1,0 +1,718 @@
+# Machine-readable AI detection rule table.
+# Maintenance: update this file whenever the corresponding prose rule Detect/Triggers/词表 changes.
+# Schema: id, name, family, match_type, literals, pattern, scan, frequency, whitelist_ref, source.
+
+- id: P-01
+  name: "Transitional adverb overuse"
+  family: P
+  match_type: literal
+  literals: ["Moreover", "Furthermore", "Additionally", "Consequently", "Notably", "Importantly", "In addition", "In particular", "Indeed"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-01
+
+- id: P-02
+  name: "Metalinguistic filler"
+  family: P
+  match_type: literal
+  literals: ["it is important to note that", "it should be noted that", "it is worth noting", "it is worth mentioning", "it bears emphasizing", "note that", "as previously mentioned", "as discussed above", "needless to say"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-02
+
+- id: P-03
+  name: "Establishing opener"
+  family: P
+  match_type: literal
+  literals: ["In today's rapidly evolving", "In recent years", "With the rise of", "As technology advances", "In the modern era", "In an age where", "The field of X has seen", "The world of X"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-03
+
+- id: P-04
+  name: "Em-dash overuse"
+  family: P
+  match_type: regex
+  literals: []
+  pattern: "—"
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-04
+
+- id: P-05
+  name: "Tricolon overuse (triple parallel structure)"
+  family: P
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-05
+
+- id: P-06
+  name: "Uniform sentence length"
+  family: P
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-06
+
+- id: P-07
+  name: "Cross-sentence paragraph symmetry"
+  family: P
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-07
+
+- id: P-08
+  name: "Balanced parallel construction with repeated stem"
+  family: P
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-08
+
+- id: P-09
+  name: "Emphatic fragment clusters"
+  family: P
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-09
+
+- id: P-10
+  name: "Hedging stack"
+  family: P
+  match_type: literal
+  literals: ["may potentially", "could possibly", "might arguably", "seems to suggest that", "appears to indicate that", "tends to generally"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-10
+
+- id: P-11
+  name: "Filler intensifiers"
+  family: P
+  match_type: literal
+  literals: ["very", "really", "quite", "rather", "fairly", "pretty", "somewhat", "highly", "significantly"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-11
+
+- id: P-12
+  name: "\"Not just X but Y\" / \"Not only X but also Y\""
+  family: P
+  match_type: literal
+  literals: ["not just", "not only", "but"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-12
+
+- id: P-13
+  name: "\"It is worth/useful/important to...\""
+  family: P
+  match_type: literal
+  literals: ["it is worth", "it is useful to", "it is important to", "it is essential to", "it is critical to", "it is necessary to"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-13
+
+- id: P-14
+  name: "\"X, which Y, Z\" nested relative clauses"
+  family: P
+  match_type: regex
+  literals: []
+  pattern: "(, which|, that)"
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-14
+
+- id: P-15
+  name: "\"From X to Y\" frame"
+  family: P
+  match_type: literal
+  literals: ["from", "ranging from"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-15
+
+- id: P-16
+  name: "Academic vocabulary over-reaching"
+  family: P
+  match_type: literal
+  literals: ["delve", "nuanced", "multifaceted", "tapestry", "intricate", "pivotal", "paramount", "robust", "leverage", "realm", "landscape", "crucial", "comprehensive", "underscore"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-16
+
+- id: P-17
+  name: "Verb–noun pretension"
+  family: P
+  match_type: literal
+  literals: ["utilize", "facilitate", "endeavor", "implement", "conceptualize", "operationalize"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-17
+
+- id: P-18
+  name: "Overused \"This/That\" sentence starts"
+  family: P
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-18
+
+- id: P-19
+  name: "Summary sentence clichés"
+  family: P
+  match_type: literal
+  literals: ["in conclusion", "in summary", "to sum up", "overall", "taken together", "all in all", "ultimately"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-19
+
+- id: P-20
+  name: "Future-work framing clichés"
+  family: P
+  match_type: literal
+  literals: ["further research is needed", "more work is required", "future studies should", "an interesting avenue for future research", "promising direction", "remains an open question"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/sentence_patterns.md#p-20
+
+- id: V-01
+  name: "delve (and morphs)"
+  family: V
+  match_type: literal
+  literals: ["delve into", "delving into", "delve deeper", "delved into"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-01
+
+- id: V-02
+  name: "nuanced"
+  family: V
+  match_type: literal
+  literals: ["nuanced", "nuance", "a more nuanced"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-02
+
+- id: V-03
+  name: "multifaceted"
+  family: V
+  match_type: literal
+  literals: ["multifaceted", "many-faceted", "multi-faceted"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-03
+
+- id: V-04
+  name: "tapestry"
+  family: V
+  match_type: literal
+  literals: ["tapestry of", "rich tapestry", "woven into the tapestry"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-04
+
+- id: V-05
+  name: "intricate"
+  family: V
+  match_type: literal
+  literals: ["intricate", "intricacy", "intricately"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-05
+
+- id: V-06
+  name: "pivotal"
+  family: V
+  match_type: literal
+  literals: ["pivotal", "plays a pivotal role", "pivotal moment"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-06
+
+- id: V-07
+  name: "paramount"
+  family: V
+  match_type: literal
+  literals: ["paramount", "of paramount importance", "paramount concern"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-07
+
+- id: V-08
+  name: "realm"
+  family: V
+  match_type: literal
+  literals: ["realm of", "in the realm of", "within the realm"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-08
+
+- id: V-09
+  name: "landscape (metaphorical)"
+  family: V
+  match_type: literal
+  literals: ["landscape of", "the X landscape", "changing landscape", "current landscape"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-09
+
+- id: V-10
+  name: "robust (outside statistical contexts)"
+  family: V
+  match_type: literal
+  literals: ["robust", "robustly", "robustness"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-10
+
+- id: V-11
+  name: "leverage (as a verb)"
+  family: V
+  match_type: literal
+  literals: ["leverage", "leveraging", "leverages", "leveraged"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-11
+
+- id: V-12
+  name: "underscore (as a verb)"
+  family: V
+  match_type: literal
+  literals: ["underscore", "underscores", "underscored", "underscoring"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-12
+
+- id: V-13
+  name: "crucial"
+  family: V
+  match_type: literal
+  literals: ["crucial", "crucially"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-13
+
+- id: V-14
+  name: "comprehensive"
+  family: V
+  match_type: literal
+  literals: ["comprehensive", "comprehensively", "comprehensive understanding"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-14
+
+- id: V-15
+  name: "showcase (as a verb)"
+  family: V
+  match_type: literal
+  literals: ["showcase", "showcases", "showcasing", "showcased"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-15
+
+- id: V-16
+  name: "embark (on/upon)"
+  family: V
+  match_type: literal
+  literals: ["embark on", "embark upon", "embarking on"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-16
+
+- id: V-17
+  name: "foster"
+  family: V
+  match_type: literal
+  literals: ["foster", "fosters", "fostering", "foster collaboration"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-17
+
+- id: V-18
+  name: "navigate (metaphorical)"
+  family: V
+  match_type: literal
+  literals: ["navigate the", "navigating the", "navigate through", "navigate this"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-18
+
+- id: V-19
+  name: "utilize / utilise"
+  family: V
+  match_type: literal
+  literals: ["utilize", "utilise", "utilization", "utilised", "utilizing"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-19
+
+- id: V-20
+  name: "facilitate"
+  family: V
+  match_type: literal
+  literals: ["facilitate", "facilitates", "facilitating", "facilitated"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-20
+
+- id: V-21
+  name: "endeavor / endeavour"
+  family: V
+  match_type: literal
+  literals: ["endeavor", "endeavour", "endeavored", "endeavouring"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-21
+
+- id: V-22
+  name: "implement (non-technical)"
+  family: V
+  match_type: literal
+  literals: ["implement", "implementation", "implementing"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-22
+
+- id: V-23
+  name: "conceptualize"
+  family: V
+  match_type: literal
+  literals: ["conceptualize", "conceptualise", "conceptualization"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-23
+
+- id: V-24
+  name: "operationalize"
+  family: V
+  match_type: literal
+  literals: ["operationalize", "operationalise", "operationalization"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-24
+
+- id: V-25
+  name: "streamline"
+  family: V
+  match_type: literal
+  literals: ["streamline", "streamlined", "streamlining"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-25
+
+- id: V-26
+  name: "arguably"
+  family: V
+  match_type: literal
+  literals: ["arguably"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-26
+
+- id: V-27
+  name: "seemingly"
+  family: V
+  match_type: literal
+  literals: ["seemingly", "seemed to", "appears to"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-27
+
+- id: V-28
+  name: "essentially / basically / fundamentally"
+  family: V
+  match_type: literal
+  literals: ["essentially", "basically", "fundamentally"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-28
+
+- id: V-29
+  name: "relatively"
+  family: V
+  match_type: literal
+  literals: ["relatively"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-29
+
+- id: V-30
+  name: "largely / mostly / primarily"
+  family: V
+  match_type: literal
+  literals: ["largely", "mostly", "primarily", "predominantly"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-30
+
+- id: V-31
+  name: "\"In today's / In the modern / In recent years\""
+  family: V
+  match_type: literal
+  literals: ["In today's", "In the modern age", "In the modern era", "In recent years", "In the current era", "In an era"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-31
+
+- id: V-32
+  name: "\"The advent of / With the rise of / The emergence of\""
+  family: V
+  match_type: literal
+  literals: ["the advent of", "with the rise of", "the emergence of", "the proliferation of"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-32
+
+- id: V-33
+  name: "\"It is well known that / It is widely accepted that\""
+  family: V
+  match_type: literal
+  literals: ["it is well known", "it is widely accepted", "it is common knowledge", "as is well known", "as is widely understood"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-33
+
+- id: V-34
+  name: "\"This paper / This work / This study\" as opener"
+  family: V
+  match_type: literal
+  literals: ["This paper", "This work", "This study", "This dissertation", "This research"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-34
+
+- id: V-35
+  name: "\"In conclusion\" family"
+  family: V
+  match_type: literal
+  literals: ["in conclusion", "to conclude", "in summary", "to summarize", "to summarise", "ultimately", "overall", "all in all", "taken together"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-35
+
+- id: V-36
+  name: "\"In light of\" / \"Given that\""
+  family: V
+  match_type: literal
+  literals: ["in light of", "given that", "in view of the fact that", "considering that"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-36
+
+- id: V-37
+  name: "\"The fact that\""
+  family: V
+  match_type: literal
+  literals: ["the fact that", "despite the fact that", "due to the fact that", "owing to the fact that"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-37
+
+- id: V-38
+  name: "\"A number of / a variety of\""
+  family: V
+  match_type: literal
+  literals: ["a number of", "a variety of", "an array of", "a host of", "a plethora of", "a myriad of"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-38
+
+- id: V-39
+  name: "\"In order to\""
+  family: V
+  match_type: literal
+  literals: ["in order to"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-39
+
+- id: V-40
+  name: "\"Play a role in\""
+  family: V
+  match_type: literal
+  literals: ["plays a role in", "play a role in", "plays a significant role", "plays a key role"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-40
+
+- id: V-41
+  name: "\"Game-changer / paradigm shift / disruptive\""
+  family: V
+  match_type: literal
+  literals: ["game-changer", "game changer", "paradigm shift", "disruptive", "revolutionary", "groundbreaking"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-41
+
+- id: V-42
+  name: "\"Unlock / unleash / harness\""
+  family: V
+  match_type: literal
+  literals: ["unlock", "unleash", "harness the power of"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-42
+
+- id: V-43
+  name: "\"Cutting-edge / state-of-the-art\""
+  family: V
+  match_type: literal
+  literals: ["cutting-edge", "cutting edge", "state-of-the-art", "state of the art", "bleeding-edge"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-43
+
+- id: V-44
+  name: "\"Moreover / Furthermore / Additionally\""
+  family: V
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-44
+
+- id: V-45
+  name: "\"Thus / Hence / Therefore\""
+  family: V
+  match_type: literal
+  literals: ["thus", "hence", "therefore"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/en/tell_tale_phrases.md#v-45

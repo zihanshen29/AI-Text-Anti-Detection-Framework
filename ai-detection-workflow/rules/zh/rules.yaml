@@ -1,0 +1,421 @@
+# Machine-readable AI detection rule table.
+# Maintenance: update this file whenever the corresponding prose rule Detect/Triggers/词表 changes.
+# Schema: id, name, family, match_type, literals, pattern, scan, frequency, whitelist_ref, source.
+
+- id: C-01
+  name: "万能承上启下套语"
+  family: C
+  match_type: literal
+  literals: ["综上所述", "由此可见", "不难看出", "不难发现", "值得注意的是", "需要指出的是", "必须强调", "毋庸置疑", "无可厚非", "从某种程度上讲", "从某种意义上讲", "在一定程度上", "在某种程度上", "可以这样说", "换言之", "换句话说", "也就是说", "简而言之", "一言以蔽之", "总的来说", "总而言之", "概括起来说"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-01
+
+- id: C-02
+  name: "开场定位套语"
+  family: C
+  match_type: literal
+  literals: ["在当今社会", "在当前背景下", "在新时代", "随着...的发展", "随着...的不断深入", "随着...的日益普及", "在...的推动下", "伴随着", "在全球化的今天", "在信息化时代"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-02
+
+- id: C-03
+  name: "AI 式程度强调"
+  family: C
+  match_type: literal
+  literals: ["极其", "非常", "十分", "格外", "尤为", "尤其", "特别是", "相当", "极为", "颇为", "很是", "甚为"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-03
+
+- id: C-04
+  name: "互联网/商业黑话"
+  family: C
+  match_type: literal
+  literals: ["赋能", "抓手", "痛点", "闭环", "生态", "壁垒", "颗粒度", "心智", "势能", "纬度", "对标", "对齐", "打通", "下沉", "抢占", "破圈", "出圈", "体感", "触达", "链路", "调性", "完备", "复盘", "锚点", "底座", "底层逻辑", "顶层设计", "战略高地", "第二曲线", "飞轮效应"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: "rules/zh/context_whitelist.md"
+  source: rules/zh/ai_cliches.md#c-04
+
+- id: C-05
+  name: "\"化\"字后缀过量"
+  family: C
+  match_type: literal
+  literals: ["系统化", "结构化", "精细化", "可视化", "模块化", "流程化", "标准化", "规范化", "常态化", "体系化", "数字化", "智能化", "自动化", "科学化", "精准化", "个性化", "定制化", "一体化", "平台化", "生态化", "产业化", "规模化", "长效化", "立体化", "纵深化"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-05
+
+- id: C-06
+  name: "三字式 / 四字式词组堆叠"
+  family: C
+  match_type: literal
+  literals: ["全面提升", "深度融合", "深入探讨", "扎实推进", "有机结合", "有效衔接", "稳步推进", "持续优化", "不断完善", "进一步加强", "有力保障", "切实做到", "统筹兼顾", "协调推进", "通盘考虑", "综合施策", "精准发力", "系统谋划"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-06
+
+- id: C-07
+  name: "大而空的抽象名词"
+  family: C
+  match_type: literal
+  literals: ["高度", "角度", "层面", "维度", "方面", "领域", "范畴", "视野", "格局", "站位", "高度重视", "深度思考", "宽度/厚度", "广度和深度"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-07
+
+- id: C-08
+  name: "首先其次再次最后"
+  family: C
+  match_type: literal
+  literals: ["首先", "其次", "再次", "然后", "最后；第一", "第二", "第三", "第四；一是", "二是", "三是", "四是"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-08
+
+- id: C-09
+  name: "不仅...而且/更... 套句"
+  family: C
+  match_type: regex
+  literals: ["不仅...而且", "不仅...还", "不仅...更", "不但...而且", "既...又...", "一方面...另一方面", "既要...又要...", "要...也要..."]
+  pattern: "(不仅.{0,40}(而且|还|更)|不但.{0,40}而且|既.{0,30}又|一方面.{0,60}另一方面|既要.{0,30}又要|要.{0,30}也要)"
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-09
+
+- id: C-10
+  name: "因果链套句"
+  family: C
+  match_type: regex
+  literals: ["之所以...是因为", "正是因为...所以", "由于...因此", "鉴于...故而", "之所以...在于"]
+  pattern: "(之所以.{0,60}是因为|正是因为.{0,60}所以|由于.{0,60}因此|鉴于.{0,60}故而|之所以.{0,60}在于)"
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-10
+
+- id: C-11
+  name: "空洞排比"
+  family: C
+  match_type: structural
+  literals: ["...必将", "...势必", "...指日可待", "...前景广阔", "...大有可为", "...任重道远", "...未来可期"]
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-11
+
+- id: C-12
+  name: "起承转合套语"
+  family: C
+  match_type: literal
+  literals: ["然而", "但是", "不过", "尽管如此", "话虽如此", "与此同时", "与之相对", "相较而言", "此外", "除此之外"]
+  pattern: null
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-12
+
+- id: C-13
+  name: "程度递进\"化\"系列"
+  family: C
+  match_type: literal
+  literals: ["越来越", "日益", "日趋", "愈发", "愈加", "更加", "进一步"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-13
+
+- id: C-14
+  name: "结尾抒情套语"
+  family: C
+  match_type: regex
+  literals: ["这一问题", "这一挑战", "这一现象", "这一趋势", "这一过程", "这一机制"]
+  pattern: "(必将|势必|指日可待|前景广阔|大有可为|任重道远|未来可期)"
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-14
+
+- id: C-15
+  name: "\"这一 X\"指代链"
+  family: C
+  match_type: regex
+  literals: ["同一句内超过 4 个并列项用顿号隔开"]
+  pattern: "这一(问题|挑战|现象|趋势|过程|机制)"
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-15
+
+- id: C-16
+  name: "过度周全的免责 / 平衡表述"
+  family: C
+  match_type: literal
+  literals: ["需要辩证看待", "一分为二", "既有积极的一面", "也有...", "不可一概而论", "需要具体问题具体分析", "因情况而异"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-16
+
+- id: C-17
+  name: "伪总结式反问"
+  family: C
+  match_type: literal
+  literals: ["为什么会这样？", "问题出在哪里？", "答案是...", "原因有三：", "这是为什么？", "何以至此？"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-17
+
+- id: C-18
+  name: "\"AI 味\"的顿号堆叠"
+  family: C
+  match_type: regex
+  literals: []
+  pattern: "([^。！？；，、]{1,16}、){4,}[^。！？；，、]{1,16}"
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/ai_cliches.md#c-18
+
+- id: S-01
+  name: "句长过度均匀"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-01
+
+- id: S-02
+  name: "短句群堆叠（对应英文 P-09）"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-02
+
+- id: S-03
+  name: "长句过度嵌套"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-03
+
+- id: S-04
+  name: "长定语堆叠"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-04
+
+- id: S-05
+  name: "\"被\"字句过量"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-05
+
+- id: S-06
+  name: "\"对...进行...\"套句"
+  family: S
+  match_type: regex
+  literals: []
+  pattern: "对.{0,24}(进行|作出|加以|开展)"
+  scan: auto
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-06
+
+- id: S-07
+  name: "\"作为...的...\"插入语"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-07
+
+- id: S-08
+  name: "\"它\"字指代滥用"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-08
+
+- id: S-09
+  name: "\"使得...成为...\"套句"
+  family: S
+  match_type: regex
+  literals: []
+  pattern: "(使得.{0,30}成为|使.{0,20}变得|这使得)"
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-09
+
+- id: S-10
+  name: "三段式从句翻译腔"
+  family: S
+  match_type: regex
+  literals: []
+  pattern: "(在.{1,20}方面，.{0,80}表明|从.{1,20}的角度来看)"
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-10
+
+- id: S-11
+  name: "完美\"三段论\"段落"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-11
+
+- id: S-12
+  name: "段落开头统一模式"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-12
+
+- id: S-13
+  name: "过度显式的段内逻辑标记"
+  family: S
+  match_type: literal
+  literals: ["然而", "但是", "因此", "所以", "此外", "同时"]
+  pattern: null
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-13
+
+- id: S-14
+  name: "对称句的规律出现"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: high
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-14
+
+- id: S-15
+  name: "全文段落长度均匀"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-15
+
+- id: S-16
+  name: "句末\"的\"字收尾"
+  family: S
+  match_type: regex
+  literals: []
+  pattern: "的[。！？]"
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-16
+
+- id: S-17
+  name: "\"等等\"、\"诸如此类\"、\"之类\"的冗余收尾"
+  family: S
+  match_type: regex
+  literals: []
+  pattern: "(等等|诸如此类|之类|等)[。！？]"
+  scan: auto
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-17
+
+- id: S-18
+  name: "摘要\"三段论\"结构"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-18
+
+- id: S-19
+  name: "引言的背景铺垫冗长"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-19
+
+- id: S-20
+  name: "结论的\"三段式\"收尾"
+  family: S
+  match_type: structural
+  literals: []
+  pattern: null
+  scan: manual
+  frequency: normal
+  whitelist_ref: null
+  source: rules/zh/sentence_patterns.md#s-20

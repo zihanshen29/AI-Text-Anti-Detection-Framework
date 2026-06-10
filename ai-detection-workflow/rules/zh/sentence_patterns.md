@@ -3,6 +3,7 @@
 > **由 Layer 0 (Discovery) 在 Step 4 扫描时加载。**
 > **补充：** 与 `ai_cliches.md`（词汇层信号）互补。本文件处理**句法和结构层**信号。
 > **Layer 2 (Execution) 不读此文件。**
+> **维护说明：** 修改任何 **检测方式** 中可机检的模式时，必须在同一提交中同步更新 `rules/zh/rules.yaml`。
 
 ## 与 ai_cliches.md 的关系
 

@@ -3,6 +3,7 @@
 > **Consumed by:** Layer 0 (Discovery) during Step 4 pattern scanning.
 > **Complements:** `sentence_patterns.md` (syntactic signals). This file is the vocabulary counterpart.
 > **Not to be read by:** Layer 2 (Execution).
+> **Maintenance:** When any **Triggers** list changes, update `rules/en/rules.yaml` in the same commit.
 
 ## Scope and relation to sentence_patterns.md
 
