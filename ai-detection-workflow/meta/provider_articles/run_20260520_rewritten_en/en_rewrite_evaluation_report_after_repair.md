@@ -163,3 +163,7 @@ Performed local-only checks:
 - Markdown heading preservation check across all 16 pairs.
 
 No source files, workflow files, templates, rules, or `SKILL.md` files were modified.
+
+## Erratum (2026-06-10)
+
+The original report text referred to "Scale: 0-36" in one place. That was a clerical error. The offline rubric scale is /35: seven dimensions, each scored 1-5. The original text above is preserved unchanged; this erratum records the corrected scale for future readers.

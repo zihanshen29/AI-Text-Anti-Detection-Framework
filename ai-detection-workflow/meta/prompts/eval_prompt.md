@@ -24,6 +24,11 @@ Step 7.7 - Outlier rule for batch reports: any sample with total < 25/35 or any 
 
 ## Output Format
 
+Hard requirements:
+
+- Every evaluation report must copy the fixed header from `templates/eval_report_header.md` before the sample-specific evaluation content.
+- Every batch report must include a per-dimension score table for each sample. A batch report without per-sample dimension scores is invalid.
+
 ```markdown
 ## Offline Evaluation
 

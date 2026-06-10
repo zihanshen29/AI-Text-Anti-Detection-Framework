@@ -7,7 +7,7 @@ description: Guide a structured three-layer workflow for reducing AI-detection s
 
 ## When to use this skill
 
-Any request to make a document "less AI-detectable", "more human", "pass AI detection", or to reduce a detector score. Applies equally to English and Chinese documents and to academic, editorial, or long-form content. If the request is "rewrite this paragraph in a more natural style" for a short snippet (< ~300 words) with no detection concern, do NOT use this skill — answer inline.
+Any request to make a document "less AI-detectable", "more human", "pass AI detection", or to reduce a detector score. Applies equally to English and Chinese documents and to academic, editorial, or long-form content. Traditional similarity reduction / "降重" is handled only as an anti-regression constraint against prior versions or source overlap; it is not the optimization target. If the request is "rewrite this paragraph in a more natural style" for a short snippet (< ~300 words) with no detection concern, do NOT use this skill — answer inline.
 
 ## Why three layers, never one
 
@@ -48,34 +48,41 @@ workflow/
   execution.md                   Layer 2 per-round prompt (one call per round)
 rules/
   en/                            loaded when document is English
+    rules.yaml                    machine-readable P/V rules for deterministic scans
     sentence_patterns.md         P-01..P-20  structural: burstiness, em-dash,
                                              triplets, fragment clusters, openers
     tell_tale_phrases.md         V-01..V-45  vocabulary: delve/nuanced/leverage,
                                              Latinate verbs, hedges, filler
+    replacement_guidance.md      AFTER-side replacement guidance and spaced-hyphen guard
     detector_profiles.md         6 detectors: GPTZero, Turnitin AI, Originality,
                                              Pangram, Copyleaks, ZeroGPT
   zh/                            中文文档时加载
+    rules.yaml                    machine-readable C/S rules for deterministic scans
     ai_cliches.md                C-01..C-18  词汇套语：赋能/抓手/综上所述/
                                              任重道远/完美列举
     sentence_patterns.md         S-01..S-20  句法：句长均匀、长定语、被字句、
                                              "对...进行..."、欧化句式
     context_whitelist.md         P0.4 中文上下文白名单：生态环境/控制闭环/
                                              不仅仅/一方面...另一方面 等不替换场景
+    replacement_blacklist.md     AFTER-side hard blacklist, disfavored replacements,
+                                             and context-specific replacement pools
     detector_profiles.md         5 检测器：知网 AIGC、万方、维普、笔灵、
                                           PaperPass
+tools/                           deterministic offline scanners; not detector simulators
 templates/                       skeletons each layer fills when producing output
   discovery_output.md            template for Layer 0 → discovery.md
   plan_output.md                 template for Layer 1 → plan.md
   changes_log.md                 template for Layer 2 → CHANGES_roundN.md
   batch_eval_output.md           template for batch offline evaluation runs
+  eval_report_header.md          fixed offline-evaluation report header
 ```
 
 ### How the rule files are loaded
 
 Layer 0 detects the document's language first, then loads the matching language folder. For a typical scan:
 
-- **English document** → load all three `rules/en/*` files. Run `sentence_patterns.md` (P-NN) structural checks first because they are the most interpretable signals; then run `tell_tale_phrases.md` (V-NN) as a vocabulary grep pass; consult `detector_profiles.md` only after the user names a target detector.
-- **Chinese document** → load `rules/zh/ai_cliches.md`, `rules/zh/sentence_patterns.md`, `rules/zh/context_whitelist.md`, and `rules/zh/detector_profiles.md`. Run `ai_cliches.md` (C-NN) first, then apply `context_whitelist.md` before forwarding hits to Layer 1, then run `sentence_patterns.md` (S-NN) for residual syntactic patterns; consult `detector_profiles.md` when the target is named.
+- **English document** → load `rules/en/sentence_patterns.md`, `rules/en/tell_tale_phrases.md`, and `rules/en/detector_profiles.md`; use `rules/en/rules.yaml` for deterministic tooling and `rules/en/replacement_guidance.md` during Layer 1 replacement checks. Run P-NN structural checks first because they are the most interpretable signals; then run V-NN as a vocabulary grep pass; consult detector profiles only after the user names a target detector.
+- **Chinese document** → load `rules/zh/ai_cliches.md`, `rules/zh/sentence_patterns.md`, `rules/zh/context_whitelist.md`, and `rules/zh/detector_profiles.md`; use `rules/zh/rules.yaml` for deterministic tooling and `rules/zh/replacement_blacklist.md` during Layer 1 replacement checks. Run C-NN first, then apply the context whitelist before forwarding hits to Layer 1, then run S-NN for residual syntactic patterns; consult detector profiles when the target is named.
 - **Mixed document** → load both folders. Identify which sections are which language and scan each with the matching ruleset.
 
 Never load both language families for a document that is monolingual — it doubles scan time and produces noise. Loading the Chinese context whitelist with the Chinese rule family is required and does not count as cross-language loading.
@@ -102,6 +109,7 @@ Batch mode requires `measurement_type: offline_rule_hits` and produces no claim 
 - **Layer 2 is universally strict.** Exact before/after string replacement is the contract in every execution context. There is no offline mode, creative mode, batch mode, or dry-run mode that relaxes this. Batch evaluation uses condensed plan tables within `templates/batch_eval_output.md`, not creative rewriting.
 - **Chinese trigger words require context protection.** Before `生态`, `闭环`, `赋能`, `痛点`, `不仅`, `一方面`, `同时`, `进行`, or `化` suffixes become fixes, Layer 0 and Layer 1 must check `rules/zh/context_whitelist.md`.
 - **AFTER strings must be scanned.** Layer 1 must check each proposed AFTER against the detected rules and universal high-frequency rules so a fix does not remove one AI signal while introducing another.
+- **Replacement diversity.** Fixes in the same rule family must not collapse into one replacement; plan-level diversity checks are defined in `workflow/planning.md` Step 4.4.
 - **Measure between rounds.** After each round, the user compiles the document, runs the detector, and records the delta. Without measurement, rounds can silently make things worse.
 - **Technical fidelity is non-negotiable.** Equations, numbers, code identifiers, citation keys, figure/table labels, and reference lists must be byte-identical before and after every round. Any rewrite that would touch them gets flagged, not applied.
 - **Anti-regression.** If the target document has a prior version (v1, v2, …), new wording must differ from both the AI-flagged current version AND the older human version. Otherwise similarity scores rise while AI scores fall — a net loss.

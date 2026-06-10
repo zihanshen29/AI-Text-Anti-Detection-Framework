@@ -223,7 +223,7 @@
 
 ### T13 — 评测报告头模板化 + 历史报告勘误
 
-**Task status:** pending
+**Task status:** done
 
 **目的：** 杜绝已实际发生的量表漂移（en after_repair 报告写了 "Scale: 0-36"，而量表与批量模板三处强调 /35）；统一逐维度报告结构（zh 报告有逐维表、en 报告没有）。
 
@@ -236,7 +236,7 @@
 
 ### T14 — `gemini/topic_04` 转正为编码回归用例
 
-**Task status:** pending
+**Task status:** done
 
 **目的：** 结束该乱码样本两轮评测"被排除"的悬置状态，变废为宝。
 
@@ -249,7 +249,7 @@
 
 ### T15 — `SKILL.md` / `workflow/discovery.md` / `workflow/planning.md` 增补
 
-**Task status:** pending
+**Task status:** done
 
 **目的：** 文档层收口：file map 反映新文件；边界澄清；brainmem 可选接入；heavy 计划粒度说明。
 
@@ -264,7 +264,7 @@
 
 ### T16 — README 双语同步更新
 
-**Task status:** pending
+**Task status:** done
 
 **目的：** 对外说明面与新能力一致。
 

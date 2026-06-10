@@ -59,6 +59,14 @@ Do not load rule files yet — just note which set applies. Loading happens in S
 
 This is the step most frameworks skip. Do not skip it.
 
+Optional memory check: if the user has a personal memory system such as BrainMem, query it first for existing project constraints (target detectors, institution rules, style guides, version history) using portable placeholders rather than machine-specific paths. Example local-only command:
+
+```powershell
+mem ask "AI detection workflow constraints for this project: target detector, institution rules, prior versions" --brain-root ${BRAIN_ROOT} --mode keyword-only --top 5
+```
+
+Treat this as optional context gathering. Only ask the user for constraints still missing after the local memory check.
+
 Ask the user these questions explicitly, in one message, before doing any scanning:
 
 1. **Target detector(s).** "Which AI detector are you trying to pass? GPTZero, Turnitin AI, Originality, Pangram, 知网 AIGC, 万方, 维普, 笔灵, PaperPass, something else? If you've already run one, what score did it give?"

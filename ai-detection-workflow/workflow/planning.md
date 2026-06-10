@@ -106,6 +106,8 @@ Use when discovery reports more than 40 total hits or when the user reports a hi
 | 6 | D | Final grep sweep for residual patterns. |
 | 7 | — | Audit. |
 
+Round 4 fixes still require sentence-level exact BEFORE/AFTER strings. If a burstiness change needs multi-sentence linked restructuring, classify it as Tier C and move it to Round 5.
+
 The user may request a custom round count. Accept it, but do not mix tiers within a round regardless of count.
 
 ## Step 4 — Produce exact before/after for every fix
