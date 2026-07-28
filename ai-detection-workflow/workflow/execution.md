@@ -16,7 +16,9 @@ python .\tools\workflow_check.py plan --plan <plan-path> --round <N> --project-r
 
 Only exit code 0 permits the round to begin. The plan manifest names each
 target, snapshot, prior path, configured overlap setting, and a labeled
-`worktree_raw_sha256` value.
+`worktree_raw_sha256` value. It also freezes the plan, active contract, target
+bytes, and every configured prior version. The JSON output path must be
+different from all of those inputs.
 
 ## After Editing
 
@@ -28,7 +30,9 @@ Record the result, JSON paths, hashes, and disposition in CHANGES. Hard
 encoding, identity, path, parse, application, or fidelity failures require a
 whole-round rollback and stop the round. Rule regressions, review-context
 warnings, structural deltas, and overlap findings require review before the
-next round.
+next round. `post-round` rejects incompatible or moved manifests, plan or
+contract drift, changed prior versions, snapshot provenance mismatches, and
+overlap settings that differ from the active contract.
 
 ## Completion
 

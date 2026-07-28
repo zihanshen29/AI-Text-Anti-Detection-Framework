@@ -40,4 +40,6 @@ jobs:
           }
       - name: Diff check
         shell: pwsh
-        run: git diff --check
+        run: |
+          $EmptyTree = git hash-object -t tree -w --stdin
+          git diff --check $EmptyTree HEAD

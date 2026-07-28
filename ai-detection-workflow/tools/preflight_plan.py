@@ -179,6 +179,9 @@ def _contract_blockers(parsed: dict[str, Any], contract: dict[str, Any]) -> list
     plan_language = (metadata["plan_language"] or "").lower()
     if plan_language not in {"en", "zh", "mixed"}:
         blockers.append("plan language must be en, zh, or mixed")
+    for fix in parsed["fixes"]:
+        if fix["round"] is None:
+            blockers.append(f"{fix['fix_id']}: fix must appear inside a numbered round")
     tiers = set(contract["editing"]["risk_tiers"])
     for round_item in parsed["rounds"]:
         if not round_item["fixes"]:
@@ -303,6 +306,17 @@ def preflight(
             result["blockers"].append("language did not resolve to en or zh")
         result["status"] = "pass" if not result["blockers"] else "blocking"
         fix_results.append(result)
+
+    target_languages: dict[str, set[str]] = {}
+    for result in fix_results:
+        if result["target"] and result["language"] in {"en", "zh"}:
+            target_languages.setdefault(result["target"], set()).add(result["language"])
+    for target, languages in sorted(target_languages.items()):
+        if len(languages) > 1:
+            blockers.append(
+                f"{Path(target).relative_to(root)}: target has inconsistent per-fix languages "
+                + ", ".join(sorted(languages))
+            )
 
     blockers.extend(
         f"Round {result['round']} {result['fix_id']}: {message}"

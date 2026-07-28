@@ -85,6 +85,34 @@ class PreflightPlanTests(unittest.TestCase):
             self.assertEqual(result["result_status"], "blocking_review")
             self.assertTrue(any("mixed plan requires per-fix language" in item for item in result["blockers"]))
 
+    def test_fix_outside_round_and_inconsistent_target_languages_are_blocking(self) -> None:
+        temporary, root, plan = self.make_project()
+        with temporary:
+            text = plan.read_text(encoding="utf-8")
+            rogue = """### Fix ROGUE - outside round
+
+- **File:** `target_one.md`
+- **Language:** `en`
+- **Secondary scan disposition:** `none`
+
+**BEFORE (verbatim)**
+> hidden
+
+**AFTER (verbatim)**
+> hidden replacement
+
+"""
+            plan.write_text(text.replace("## Round 1 - Tier A", rogue + "## Round 1 - Tier A"), encoding="utf-8")
+            result = preflight_plan.preflight(plan, root, "all", CONTRACT)
+            self.assertTrue(any("ROGUE: fix must appear inside a numbered round" in item for item in result["blockers"]))
+
+            text = text.replace("`target_two.md`", "`target_one.md`")
+            marker = "- **Language:** `en`\n- **Secondary scan disposition:** `none`\n\n**BEFORE (verbatim)**\n> Beta"
+            text = text.replace(marker, marker.replace("`en`", "`zh`"), 1)
+            plan.write_text(text, encoding="utf-8")
+            result = preflight_plan.preflight(plan, root, "all", CONTRACT)
+            self.assertTrue(any("inconsistent per-fix languages en, zh" in item for item in result["blockers"]))
+
     def test_legacy_single_file_mode_remains_available(self) -> None:
         command = [
             sys.executable,

@@ -56,6 +56,14 @@ class GuardrailsDiffTests(unittest.TestCase):
         self.assertTrue(any(item["check"] == "entity occurrence order" and item["status"] == "hard_fail" for item in moved["checks"]))
         self.assertTrue(any(item["check"] == "nearest heading scope" and item["status"] == "hard_fail" for item in moved["checks"]))
 
+    def test_short_version_and_bare_pandoc_citation_are_guarded(self) -> None:
+        source = "Release v1.2 cites @smith2020."
+        rewrite = "Release v1.3 cites @jones2024."
+        entities = guardrails_diff.extract_entities(source)
+        self.assertTrue(any(item["kind"] == "version" and item["value"] == "v1.2" for item in entities))
+        self.assertTrue(any(item["kind"] == "pandoc_citation" and item["value"] == "smith2020" for item in entities))
+        self.assertTrue(guardrails_diff.compare_texts(source, rewrite, "en")["hard_failure"])
+
     def test_local_context_change_is_a_review_warning_not_hard_failure(self) -> None:
         source = "Value 10 appears in original wording."
         rewrite = "Value 10 appears in revised wording."

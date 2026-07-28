@@ -58,12 +58,34 @@ class ScanRulesTests(unittest.TestCase):
         actionable = self.scan_zh("该项目强调业务生态。")
         self.assertEqual(actionable["aggregate"]["actionable_unique_spans"], 1)
 
+    def test_regex_hit_uses_the_context_around_its_trigger(self) -> None:
+        result = self.scan_zh("这不仅仅是速度问题，而且关系到稳定性。")
+        hit = next(item for item in result["hits"] if "C-09" in item["rule_ids"])
+        self.assertEqual(hit["disposition"], "whitelisted")
+        self.assertEqual(hit["whitelist_entry_ids"], ["ZH-WL-04"])
+
     def test_exact_duplicate_spans_merge_rule_ids(self) -> None:
         result = self.scan_zh("但是，此外，然而。")
         self.assertEqual(result["aggregate"]["raw_rule_hits"], 6)
         self.assertEqual(result["aggregate"]["raw_unique_spans"], 3)
         self.assertEqual(result["aggregate"]["actionable_unique_spans"], 3)
         self.assertEqual({tuple(hit["rule_ids"]) for hit in result["hits"]}, {("C-12", "S-13")})
+
+    def test_duplicate_matchers_inside_one_rule_count_one_raw_rule_span(self) -> None:
+        rule = {
+            "id": "T-01",
+            "name": "duplicate matcher",
+            "family": "T",
+            "scan": "auto",
+            "literals": ["然而"],
+            "pattern": "然而",
+            "patterns": [],
+            "whitelist_ref": None,
+        }
+        result = scan_rules.scan_text("然而。", [rule], "zh")
+        self.assertEqual(result["aggregate"]["raw_rule_hits"], 1)
+        self.assertEqual(result["aggregate"]["raw_unique_spans"], 1)
+        self.assertEqual(result["rules"][0]["raw_rule_hits"], 1)
 
     def test_baseline_uses_actionable_unique_spans(self) -> None:
         baseline = self.scan_zh("业务生态。")

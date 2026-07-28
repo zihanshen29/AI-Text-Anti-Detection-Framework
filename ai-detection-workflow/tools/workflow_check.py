@@ -22,6 +22,8 @@ from tool_common import ToolError, infer_lang, load_rules_yaml, print_error, rea
 
 TOOL_VERSION = "1.3.0"
 MANIFEST_KIND = "ai-detection-workflow-plan-manifest"
+MANIFEST_VERSION = 1
+HASH_KIND = "worktree_raw_sha256"
 
 
 def parse_args() -> argparse.Namespace:
@@ -51,7 +53,19 @@ def _utc_now() -> str:
 
 
 def _hash_file(path: Path) -> dict[str, str]:
-    return {"hash_kind": "worktree_raw_sha256", "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    try:
+        payload = path.read_bytes()
+    except OSError as exc:
+        raise ToolError(f"cannot hash {path}: {exc}") from exc
+    return {"hash_kind": HASH_KIND, "sha256": hashlib.sha256(payload).hexdigest()}
+
+
+def _validate_hash_record(record: Any, label: str) -> None:
+    if not isinstance(record, dict) or record.get("hash_kind") != HASH_KIND:
+        raise ToolError(f"{label} must use {HASH_KIND}")
+    digest = record.get("sha256")
+    if not isinstance(digest, str) or len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest.lower()):
+        raise ToolError(f"{label} has an invalid SHA-256 digest")
 
 
 def _load_contract() -> dict[str, Any]:
@@ -79,8 +93,11 @@ def _base_evidence(command: str, contract: dict[str, Any]) -> dict[str, Any]:
 
 def _write_json(path_value: str, payload: dict[str, Any]) -> Path:
     path = Path(path_value).resolve()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    except OSError as exc:
+        raise ToolError(f"cannot write JSON evidence {path}: {exc}") from exc
     return path
 
 
@@ -108,8 +125,11 @@ def run_discovery(text_path: str, language: str, contract: dict[str, Any]) -> di
     return result
 
 
-def _snapshot_targets(preflight: dict[str, Any], snapshot_dir: Path, contract: dict[str, Any], output_path: Path) -> list[dict[str, Any]]:
-    snapshot_dir.mkdir(parents=True, exist_ok=True)
+def _snapshot_targets(preflight: dict[str, Any], snapshot_dir: Path, contract: dict[str, Any]) -> list[dict[str, Any]]:
+    try:
+        snapshot_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise ToolError(f"cannot create snapshot directory {snapshot_dir}: {exc}") from exc
     grouped: dict[str, list[dict[str, Any]]] = {}
     for fix in preflight["fixes"]:
         grouped.setdefault(fix["target"], []).append(fix)
@@ -118,8 +138,16 @@ def _snapshot_targets(preflight: dict[str, Any], snapshot_dir: Path, contract: d
     for index, (target_value, fixes) in enumerate(grouped.items(), start=1):
         target = Path(target_value).resolve()
         snapshot = snapshot_dir / f"{index:02d}_{target.name}"
-        shutil.copyfile(target, snapshot)
+        preflight_target = _hash_file(target)
+        try:
+            shutil.copyfile(target, snapshot)
+        except OSError as exc:
+            raise ToolError(f"cannot snapshot {target} to {snapshot}: {exc}") from exc
         prior_paths = sorted({fix["prior_path"] for fix in fixes if fix.get("prior_path")})
+        prior_inputs = [{"path": value, **_hash_file(Path(value).resolve())} for value in prior_paths]
+        snapshot_hash = _hash_file(snapshot)
+        if snapshot_hash != preflight_target:
+            raise ToolError(f"snapshot bytes differ from target immediately after copy: {target}")
         targets.append(
             {
                 "target_path": str(target),
@@ -141,8 +169,9 @@ def _snapshot_targets(preflight: dict[str, Any], snapshot_dir: Path, contract: d
                     "overlap_threshold": contract["anti_regression"]["overlap_threshold"],
                 },
                 "snapshot_path": str(snapshot.resolve()),
-                "snapshot": _hash_file(snapshot),
-                "preflight_target": _hash_file(target),
+                "snapshot": snapshot_hash,
+                "preflight_target": preflight_target,
+                "prior_inputs": prior_inputs,
             }
         )
     return targets
@@ -157,14 +186,31 @@ def run_plan(
     contract: dict[str, Any],
 ) -> dict[str, Any]:
     preflight = preflight_plan.preflight(plan_path, project_root, round_selection, contract)
+    contract_path = repo_path("workflow/contract.json").resolve()
+    plan_input_path = Path(preflight["plan_path"]).resolve()
+    output = Path(output_path).resolve()
+    protected_inputs = {plan_input_path, contract_path}
+    parsed_plan = preflight_plan.parse_plan(read_text_checked(plan_input_path))
+    project = Path(preflight["project_root"]).resolve()
+    for fix in parsed_plan["fixes"]:
+        for key in ("file", "prior_file"):
+            if not fix.get(key):
+                continue
+            candidate, issue = preflight_plan._resolve_inside_root(fix[key], project)
+            if issue is None and candidate is not None:
+                protected_inputs.add(candidate)
+    if output in protected_inputs:
+        raise ToolError(f"plan output must not overwrite an input file: {output}")
     result = _base_evidence("plan", contract)
     result.update(
         {
             "normalized_paths": {
                 "plan": preflight["plan_path"],
                 "project_root": preflight["project_root"],
-                "output": str(Path(output_path).resolve()),
+                "output": str(output),
             },
+            "plan_input": {"path": str(plan_input_path), **_hash_file(plan_input_path)},
+            "contract_input": {"path": str(contract_path), **_hash_file(contract_path)},
             "round_selection": round_selection,
             "preflight": preflight,
             "result_status": preflight["result_status"],
@@ -172,16 +218,15 @@ def run_plan(
         }
     )
     if snapshot_dir and preflight["result_status"] == "executable":
-        output = Path(output_path).resolve()
         snapshots = Path(snapshot_dir).resolve()
         result.update(
             {
                 "manifest_kind": MANIFEST_KIND,
-                "manifest_version": 1,
+                "manifest_version": MANIFEST_VERSION,
                 "generated_by": "workflow_check.py",
                 "manifest_generated": True,
                 "snapshot_dir": str(snapshots),
-                "targets": _snapshot_targets(preflight, snapshots, contract, output),
+                "targets": _snapshot_targets(preflight, snapshots, contract),
             }
         )
     return result
@@ -211,7 +256,7 @@ def _overlap_component(current: str, prior: str, language: str, window: int, thr
     }
 
 
-def _load_plan_manifest(path_value: str) -> tuple[Path, dict[str, Any]]:
+def _load_plan_manifest(path_value: str, contract: dict[str, Any]) -> tuple[Path, dict[str, Any]]:
     path = repo_path(path_value).resolve()
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -219,24 +264,239 @@ def _load_plan_manifest(path_value: str) -> tuple[Path, dict[str, Any]]:
         raise ToolError(f"cannot read plan manifest {path}: {exc}") from exc
     except json.JSONDecodeError as exc:
         raise ToolError(f"invalid plan manifest JSON {path}: {exc}") from exc
-    required = {"manifest_kind", "manifest_version", "generated_by", "command_type", "targets", "normalized_paths"}
+    if not isinstance(payload, dict):
+        raise ToolError("plan manifest must be a JSON object")
+    required = {
+        "tool_version",
+        "command_type",
+        "contract_version",
+        "external_detector_status",
+        "result_status",
+        "manifest_kind",
+        "manifest_version",
+        "generated_by",
+        "manifest_generated",
+        "snapshot_dir",
+        "round_selection",
+        "targets",
+        "normalized_paths",
+        "plan_input",
+        "contract_input",
+    }
     missing = required - set(payload)
-    if missing or payload.get("manifest_kind") != MANIFEST_KIND or payload.get("generated_by") != "workflow_check.py" or payload.get("command_type") != "plan":
-        raise ToolError("post-round accepts only a plan-generated workflow_check manifest")
+    if missing:
+        raise ToolError("plan manifest is missing required fields: " + ", ".join(sorted(missing)))
+    if (
+        payload.get("manifest_kind") != MANIFEST_KIND
+        or payload.get("manifest_version") != MANIFEST_VERSION
+        or payload.get("generated_by") != "workflow_check.py"
+        or payload.get("command_type") != "plan"
+        or payload.get("tool_version") != TOOL_VERSION
+        or payload.get("contract_version") != contract["schema_version"]
+        or payload.get("external_detector_status") != "not_run"
+        or payload.get("result_status") != "executable"
+        or payload.get("manifest_generated") is not True
+    ):
+        raise ToolError("post-round accepts only a compatible executable workflow_check plan manifest")
+    if not isinstance(payload["normalized_paths"], dict):
+        raise ToolError("plan manifest normalized_paths must be an object")
+    if not isinstance(payload["snapshot_dir"], str) or not payload["snapshot_dir"]:
+        raise ToolError("plan manifest snapshot_dir must be a non-empty path")
+    for key in ("plan", "project_root", "output"):
+        if not isinstance(payload["normalized_paths"].get(key), str) or not payload["normalized_paths"][key]:
+            raise ToolError(f"plan manifest normalized_paths is missing {key}")
+    if Path(payload["normalized_paths"]["output"]).resolve() != path:
+        raise ToolError("plan manifest output identity does not match its current path")
+    for key in ("plan_input", "contract_input"):
+        record = payload[key]
+        if not isinstance(record, dict) or not isinstance(record.get("path"), str):
+            raise ToolError(f"plan manifest {key} is invalid")
+        _validate_hash_record(record, f"plan manifest {key}")
     if not isinstance(payload["targets"], list) or not payload["targets"]:
         raise ToolError("plan manifest has no snapshot targets")
+    required_target = {
+        "target_path",
+        "target_relative_path",
+        "language",
+        "rounds",
+        "fixes",
+        "prior_paths",
+        "prior_inputs",
+        "overlap_settings",
+        "snapshot_path",
+        "snapshot",
+        "preflight_target",
+    }
+    for index, target in enumerate(payload["targets"], start=1):
+        if not isinstance(target, dict):
+            raise ToolError(f"plan manifest target {index} is not an object")
+        target_missing = required_target - set(target)
+        if target_missing:
+            raise ToolError(f"plan manifest target {index} is missing: {', '.join(sorted(target_missing))}")
+        for key in ("target_path", "target_relative_path", "snapshot_path"):
+            if not isinstance(target[key], str) or not target[key]:
+                raise ToolError(f"plan manifest target {index} has an invalid {key}")
+        if not Path(target["target_path"]).is_absolute() or not Path(target["snapshot_path"]).is_absolute():
+            raise ToolError(f"plan manifest target {index} paths must be absolute")
+        relative_target = Path(target["target_relative_path"])
+        if relative_target.is_absolute() or ".." in relative_target.parts:
+            raise ToolError(f"plan manifest target {index} target_relative_path must stay relative")
+        if target["language"] not in {"en", "zh"}:
+            raise ToolError(f"plan manifest target {index} has an invalid language")
+        if not isinstance(target["rounds"], list) or not target["rounds"] or not all(isinstance(value, int) for value in target["rounds"]):
+            raise ToolError(f"plan manifest target {index} has invalid rounds")
+        if not isinstance(target["fixes"], list) or not target["fixes"]:
+            raise ToolError(f"plan manifest target {index} has no fixes")
+        for fix in target["fixes"]:
+            if (
+                not isinstance(fix, dict)
+                or not isinstance(fix.get("round"), int)
+                or not isinstance(fix.get("fix_id"), str)
+                or not isinstance(fix.get("secondary_scan_disposition"), str)
+            ):
+                raise ToolError(f"plan manifest target {index} has an invalid fix record")
+        if not isinstance(target["prior_paths"], list) or not all(isinstance(value, str) for value in target["prior_paths"]):
+            raise ToolError(f"plan manifest target {index} has invalid prior paths")
+        if not isinstance(target["prior_inputs"], list):
+            raise ToolError(f"plan manifest target {index} has invalid prior inputs")
+        for prior in target["prior_inputs"]:
+            if not isinstance(prior, dict) or not isinstance(prior.get("path"), str):
+                raise ToolError(f"plan manifest target {index} has an invalid prior input")
+            _validate_hash_record(prior, f"plan manifest target {index} prior input")
+        if {str(Path(value).resolve()) for value in target["prior_paths"]} != {
+            str(Path(value["path"]).resolve()) for value in target["prior_inputs"]
+        }:
+            raise ToolError(f"plan manifest target {index} prior paths do not match prior inputs")
+        if not isinstance(target["overlap_settings"], dict):
+            raise ToolError(f"plan manifest target {index} has invalid overlap settings")
+        _validate_hash_record(target["snapshot"], f"plan manifest target {index} snapshot")
+        _validate_hash_record(target["preflight_target"], f"plan manifest target {index} preflight target")
     return path, payload
 
 
-def run_post_round(manifest_path: str, contract: dict[str, Any]) -> dict[str, Any]:
-    manifest_file, manifest = _load_plan_manifest(manifest_path)
+def _manifest_declaration_issues(manifest: dict[str, Any], root: Path) -> list[str]:
+    """Compare manifest declarations with the immutable plan without reading target text."""
+
+    plan_path = Path(manifest["plan_input"]["path"]).resolve()
+    parsed = preflight_plan.parse_plan(read_text_checked(plan_path))
+    selection = manifest["round_selection"]
+    if selection == "all":
+        selected_rounds = {item["number"] for item in parsed["rounds"]}
+    elif isinstance(selection, str) and selection.isdigit():
+        selected_rounds = {int(selection)}
+    else:
+        return ["manifest round_selection is invalid"]
+
+    plan_language = (parsed["metadata"]["plan_language"] or "").lower()
+    expected: dict[str, dict[str, Any]] = {}
+    issues: list[str] = []
+    for fix in parsed["fixes"]:
+        if fix["round"] not in selected_rounds:
+            continue
+        if not all(fix.get(field) for field in ("file", "secondary_scan_disposition")):
+            issues.append(f"plan fix {fix['fix_id']} lacks manifest declaration fields")
+            continue
+        target, target_issue = preflight_plan._resolve_inside_root(fix["file"], root)
+        if target_issue or target is None:
+            issues.append(target_issue or f"cannot resolve target for {fix['fix_id']}")
+            continue
+        language = (fix.get("language") or plan_language).lower()
+        group = expected.setdefault(
+            str(target),
+            {
+                "target_relative_path": str(target.relative_to(root)),
+                "languages": set(),
+                "rounds": set(),
+                "fixes": [],
+                "prior_paths": set(),
+            },
+        )
+        group["languages"].add(language)
+        group["rounds"].add(fix["round"])
+        group["fixes"].append(
+            (
+                fix["round"],
+                fix["fix_id"],
+                fix["secondary_scan_disposition"],
+            )
+        )
+        if fix.get("prior_file"):
+            prior, prior_issue = preflight_plan._resolve_inside_root(fix["prior_file"], root)
+            if prior_issue or prior is None:
+                issues.append(prior_issue or f"cannot resolve prior file for {fix['fix_id']}")
+            else:
+                group["prior_paths"].add(str(prior))
+
+    actual = {str(Path(item["target_path"]).resolve()): item for item in manifest["targets"]}
+    if set(actual) != set(expected):
+        issues.append("manifest target set does not match the selected plan fixes")
+        return issues
+    for target_path, declaration in expected.items():
+        target = actual[target_path]
+        languages = declaration["languages"]
+        if len(languages) != 1 or target["language"] not in languages:
+            issues.append(f"{declaration['target_relative_path']}: manifest language does not match the plan")
+        if target["target_relative_path"] != declaration["target_relative_path"]:
+            issues.append(f"{declaration['target_relative_path']}: manifest relative target path does not match the plan")
+        if sorted(target["rounds"]) != sorted(declaration["rounds"]):
+            issues.append(f"{declaration['target_relative_path']}: manifest rounds do not match the plan")
+        actual_fixes = sorted(
+            (
+                fix["round"],
+                fix["fix_id"],
+                fix["secondary_scan_disposition"],
+            )
+            for fix in target["fixes"]
+        )
+        if actual_fixes != sorted(declaration["fixes"]):
+            issues.append(f"{declaration['target_relative_path']}: manifest fixes do not match the plan")
+        if {str(Path(value).resolve()) for value in target["prior_paths"]} != declaration["prior_paths"]:
+            issues.append(f"{declaration['target_relative_path']}: manifest prior paths do not match the plan")
+    return issues
+
+
+def run_post_round(manifest_path: str, contract: dict[str, Any], output_path: str | None = None) -> dict[str, Any]:
+    manifest_file, manifest = _load_plan_manifest(manifest_path, contract)
+    if output_path is not None:
+        output = Path(output_path).resolve()
+        protected_inputs = {
+            manifest_file,
+            Path(manifest["plan_input"]["path"]).resolve(),
+            Path(manifest["contract_input"]["path"]).resolve(),
+        }
+        for target in manifest["targets"]:
+            protected_inputs.add(Path(target["target_path"]).resolve())
+            protected_inputs.add(Path(target["snapshot_path"]).resolve())
+            protected_inputs.update(Path(value).resolve() for value in target["prior_paths"])
+        if output in protected_inputs:
+            raise ToolError(f"post-round output must not overwrite an input file: {output}")
     root = Path(manifest["normalized_paths"]["project_root"]).resolve()
     if not root.is_dir():
         raise ToolError(f"manifest project root is unavailable: {root}")
     result = _base_evidence("post-round", contract)
     target_results: list[dict[str, Any]] = []
-    hard_failure = False
+    manifest_identity_issues: list[str] = []
+    for key, expected_path in (
+        ("plan_input", Path(manifest["normalized_paths"]["plan"]).resolve()),
+        ("contract_input", repo_path("workflow/contract.json").resolve()),
+    ):
+        record = manifest[key]
+        recorded_path = Path(record["path"]).resolve()
+        if recorded_path != expected_path:
+            manifest_identity_issues.append(f"{key} path does not match normalized provenance")
+            continue
+        try:
+            if _hash_file(recorded_path) != {"hash_kind": record["hash_kind"], "sha256": record["sha256"]}:
+                manifest_identity_issues.append(f"{key} changed after plan preflight")
+        except ToolError as exc:
+            manifest_identity_issues.append(str(exc))
+    try:
+        manifest_identity_issues.extend(_manifest_declaration_issues(manifest, root))
+    except ToolError as exc:
+        manifest_identity_issues.append(str(exc))
+    hard_failure = bool(manifest_identity_issues)
     review_required = False
+    snapshot_root = Path(manifest["snapshot_dir"]).resolve()
     for target_data in manifest["targets"]:
         target_result: dict[str, Any] = {
             "target_path": target_data.get("target_path"),
@@ -250,13 +510,22 @@ def run_post_round(manifest_path: str, contract: dict[str, Any]) -> dict[str, An
             if target != expected:
                 raise ToolError("target identity does not match the manifest relative path")
             snapshot = Path(target_data["snapshot_path"]).resolve()
+            snapshot.relative_to(snapshot_root)
             recorded_snapshot = target_data["snapshot"]
-            if recorded_snapshot.get("hash_kind") != "worktree_raw_sha256" or _hash_file(snapshot) != recorded_snapshot:
+            if _hash_file(snapshot) != recorded_snapshot:
                 raise ToolError("snapshot identity hash does not match the plan manifest")
+            if target_data["preflight_target"] != recorded_snapshot:
+                raise ToolError("snapshot hash does not match the target hash recorded at plan preflight")
+            expected_overlap_settings = {
+                "window_tokens": contract["anti_regression"]["window_tokens"],
+                "overlap_threshold": contract["anti_regression"]["overlap_threshold"],
+            }
+            if target_data["overlap_settings"] != expected_overlap_settings:
+                raise ToolError("overlap settings do not match the active workflow contract")
             source = read_text_checked(snapshot)
             current = read_text_checked(target)
             target_result["components"]["identity"] = {"status": "pass", "snapshot": recorded_snapshot, "current": _hash_file(target)}
-        except (KeyError, OSError, ToolError) as exc:
+        except (KeyError, OSError, ToolError, ValueError) as exc:
             target_result["components"]["identity"] = {"status": "hard_fail", "error": str(exc)}
             target_results.append(target_result)
             hard_failure = True
@@ -299,10 +568,17 @@ def run_post_round(manifest_path: str, contract: dict[str, Any]) -> dict[str, An
 
         prior_components = []
         settings = target_data["overlap_settings"]
+        prior_records = {str(Path(item["path"]).resolve()): item for item in target_data["prior_inputs"]}
         for prior_value in target_data.get("prior_paths", []):
             prior = Path(prior_value).resolve()
             try:
                 prior.relative_to(root)
+                prior_record = prior_records.get(str(prior))
+                if prior_record is None or _hash_file(prior) != {
+                    "hash_kind": prior_record["hash_kind"],
+                    "sha256": prior_record["sha256"],
+                }:
+                    raise ToolError("prior-version identity hash does not match the plan manifest")
                 prior_text = read_text_checked(prior)
             except (ValueError, ToolError) as exc:
                 prior_components.append({"prior_path": str(prior), "status": "hard_fail", "error": str(exc)})
@@ -326,6 +602,12 @@ def run_post_round(manifest_path: str, contract: dict[str, Any]) -> dict[str, An
         {
             "normalized_paths": {"manifest": str(manifest_file), "project_root": str(root)},
             "manifest_hash": _hash_file(manifest_file),
+            "component_results": {
+                "manifest_identity": {
+                    "status": "hard_fail" if manifest_identity_issues else "pass",
+                    "issues": manifest_identity_issues,
+                }
+            },
             "targets": target_results,
             "result_status": status,
             "rollback_unit": contract["rollback"]["unit"],
@@ -340,11 +622,13 @@ def main() -> int:
     try:
         contract = _load_contract()
         if args.command == "discovery":
+            if Path(args.output).resolve() == repo_path(args.text).resolve():
+                raise ToolError("discovery output must not overwrite the input document")
             result = run_discovery(args.text, args.lang, contract)
         elif args.command == "plan":
             result = run_plan(args.plan, args.round, args.project_root, args.snapshot_dir, args.output, contract)
         else:
-            result = run_post_round(args.manifest, contract)
+            result = run_post_round(args.manifest, contract, args.output)
         _write_json(args.output, result)
         return 0 if result["result_status"] in {"complete", "executable"} else 1
     except ToolError as exc:

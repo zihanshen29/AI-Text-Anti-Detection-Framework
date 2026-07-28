@@ -26,7 +26,10 @@ Layer 0 handoff requires discovery JSON. Layer 1 approval requires a successful
 `plan --round all` gate. Layer 2 editing requires a successful snapshot gate;
 Layer 2 handoff requires `post-round` evidence. JSON output labels every
 runtime hash as `worktree_raw_sha256` and records `external_detector_status:
-not_run`.
+not_run`. Plan manifests freeze the plan, workflow contract, target snapshots,
+and configured prior versions. Post-round validation rejects drift in those
+inputs or in the contract overlap settings. An output path may not alias an
+input file.
 
 ## Supporting Tools
 

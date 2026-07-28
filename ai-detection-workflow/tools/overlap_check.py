@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import math
 import re
 import sys
 from typing import Any
@@ -141,6 +142,8 @@ def _findings(
 
 
 def analyze_texts(current_text: str, prior_text: str, lang: str, window: int, threshold: float) -> dict[str, Any]:
+    if not math.isfinite(threshold) or not 0.0 <= threshold <= 1.0:
+        raise ToolError("--threshold must be a finite value between 0 and 1")
     current_tokens = tokenize(current_text, lang)
     prior_tokens = tokenize(prior_text, lang)
     current_windows = windows(current_tokens, window)
@@ -162,6 +165,8 @@ def analyze_texts(current_text: str, prior_text: str, lang: str, window: int, th
 def naive_analyze_texts(current_text: str, prior_text: str, lang: str, window: int, threshold: float) -> dict[str, Any]:
     """Reference output used only by deterministic equivalence tests."""
 
+    if not math.isfinite(threshold) or not 0.0 <= threshold <= 1.0:
+        raise ToolError("--threshold must be a finite value between 0 and 1")
     current_tokens = tokenize(current_text, lang)
     prior_tokens = tokenize(prior_text, lang)
     current_windows = windows(current_tokens, window)

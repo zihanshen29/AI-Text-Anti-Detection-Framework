@@ -18,10 +18,13 @@ CONTEXT_RADIUS = 48
 NUMBER_RE = re.compile(
     r"(?<![\w.])(?:[+\-−])?(?:(?:\d{1,3}(?:,\d{3})+)|\d+)(?:\.\d+)?(?:[eE][+\-]?\d+)?%?(?!\w)"
 )
-VERSION_RE = re.compile(r"(?<![\w.])v?\d+(?:\.\d+){2,}(?![\w.])", re.IGNORECASE)
+VERSION_RE = re.compile(
+    r"(?<![\w.])(?:v\d+(?:\.\d+)+|\d+(?:\.\d+){2,})(?![\w.])",
+    re.IGNORECASE,
+)
 NUMERIC_CITATION_RE = re.compile(r"\[(\s*\d+(?:\s*(?:,|;|[-–])\s*\d+)*\s*)\]")
 LATEX_CITE_RE = re.compile(r"\\(cite|citep|citet)(?:\[[^\]]*\]){0,2}\{([^}]+)\}")
-PANDOC_CITE_RE = re.compile(r"\[([^\]]*@[^\]]+)\]")
+PANDOC_CITE_RE = re.compile(r"(?<![\w@])@([A-Za-z0-9_:.\-]*[A-Za-z0-9_])")
 MARKDOWN_HEADING_RE = re.compile(r"^\s*(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 LATEX_HEADING_RE = re.compile(r"\\(part|chapter|section|subsection|subsubsection)\*?\{([^}]+)\}")
 LATEX_LABEL_RE = re.compile(r"\\label\{([^}]+)\}")
@@ -90,8 +93,7 @@ def extract_entities(text: str) -> list[dict[str, Any]]:
             if key:
                 entities.append(_make_entity(f"latex_{command}", key, match.start(), match.end(), text))
     for match in PANDOC_CITE_RE.finditer(text):
-        for key in re.findall(r"@([A-Za-z0-9_:.\-]+)", match.group(1)):
-            entities.append(_make_entity("pandoc_citation", key, match.start(), match.end(), text))
+        entities.append(_make_entity("pandoc_citation", match.group(1), match.start(), match.end(), text))
     for match in LATEX_LABEL_RE.finditer(text):
         entities.append(_make_entity("latex_label", match.group(1), match.start(), match.end(), text))
     for match in TEXT_LABEL_RE.finditer(text):

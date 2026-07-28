@@ -101,8 +101,9 @@ def _context_disposition(
     rule_ids: set[str],
     rules_by_id: dict[str, dict[str, Any]],
     whitelist_cache: dict[tuple[str, str], list[dict[str, Any]]],
+    context_match_cache: dict[tuple[str, str, str], list[tuple[int, int]]],
 ) -> tuple[str, list[str]]:
-    """Return the longest containing whitelist context for one unique span."""
+    """Return the longest context containing a configured trigger occurrence."""
 
     candidates: list[tuple[int, str, str]] = []
     matched_text = text[start:end]
@@ -118,9 +119,21 @@ def _context_disposition(
         for entry in whitelist_cache[cache_key]:
             if rule_id not in entry["rule_ids"] or entry["trigger"] not in matched_text:
                 continue
-            for match in re.finditer(entry["context_matcher"], text):
-                if match.start() <= start and end <= match.end():
-                    candidates.append((match.end() - match.start(), entry["disposition"], entry["id"]))
+            trigger = entry["trigger"]
+            trigger_offset = matched_text.find(trigger)
+            while trigger_offset != -1:
+                trigger_start = start + trigger_offset
+                trigger_end = trigger_start + len(trigger)
+                context_key = (workflow_root, reference, entry["id"])
+                if context_key not in context_match_cache:
+                    context_match_cache[context_key] = [
+                        (match.start(), match.end())
+                        for match in re.finditer(entry["context_matcher"], text)
+                    ]
+                for context_start, context_end in context_match_cache[context_key]:
+                    if context_start <= trigger_start and trigger_end <= context_end:
+                        candidates.append((context_end - context_start, entry["disposition"], entry["id"]))
+                trigger_offset = matched_text.find(trigger, trigger_offset + 1)
     if not candidates:
         return "actionable", []
 
@@ -146,6 +159,14 @@ def scan_text(text: str, rules: list[dict[str, Any]], lang: str) -> dict[str, An
             continue
         raw_hits.extend(matcher_spans(text, rule, lang))
 
+    raw_hits = list(
+        {
+            (hit["start"], hit["end"], hit["rule_id"]): hit
+            for hit in raw_hits
+        }.values()
+    )
+    raw_hits.sort(key=lambda hit: (hit["start"], hit["end"], hit["rule_id"]))
+
     grouped: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     for hit in raw_hits:
         grouped[(hit["start"], hit["end"])].append(hit)
@@ -167,10 +188,19 @@ def scan_text(text: str, rules: list[dict[str, Any]], lang: str) -> dict[str, An
         per_rule[hit["rule_id"]]["raw_rule_hits"] += 1
 
     whitelist_cache: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    context_match_cache: dict[tuple[str, str, str], list[tuple[int, int]]] = {}
     unique_hits: list[dict[str, Any]] = []
     for (start, end), hits in sorted(grouped.items()):
         rule_ids = {hit["rule_id"] for hit in hits}
-        disposition, whitelist_entry_ids = _context_disposition(text, start, end, rule_ids, rules_by_id, whitelist_cache)
+        disposition, whitelist_entry_ids = _context_disposition(
+            text,
+            start,
+            end,
+            rule_ids,
+            rules_by_id,
+            whitelist_cache,
+            context_match_cache,
+        )
         for rule_id in rule_ids:
             per_rule[rule_id][f"{disposition}_unique_spans"] += 1
         unique_hits.append(

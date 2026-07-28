@@ -49,6 +49,15 @@ class DocumentationContractTests(unittest.TestCase):
         issues = lint_repository.stale_contract_forms(stale)
         self.assertGreaterEqual(len(issues), 4)
 
+    def test_ci_covers_both_operating_systems_and_checks_the_tracked_tree(self) -> None:
+        text = (WORKFLOW_ROOT.parent / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        self.assertIn("windows-latest", text)
+        self.assertIn("ubuntu-latest", text)
+        self.assertIn("python -m unittest discover", text)
+        self.assertIn("lint_repository.py all", text)
+        self.assertIn("git hash-object -t tree -w --stdin", text)
+        self.assertIn("git diff --check $EmptyTree HEAD", text)
+
 
 if __name__ == "__main__":
     unittest.main()

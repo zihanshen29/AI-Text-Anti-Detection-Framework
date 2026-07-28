@@ -67,6 +67,11 @@ class OverlapCheckTests(unittest.TestCase):
             completed = subprocess.run(command, check=False, capture_output=True, text=True, encoding="utf-8")
             self.assertEqual(completed.returncode, 2)
 
+    def test_threshold_must_be_finite_and_bounded(self) -> None:
+        for threshold in (-0.1, 1.1, float("nan"), float("inf")):
+            with self.assertRaisesRegex(Exception, "finite value between 0 and 1"):
+                overlap_check.analyze_texts("alpha beta", "alpha beta", "en", 2, threshold)
+
 
 if __name__ == "__main__":
     unittest.main()
