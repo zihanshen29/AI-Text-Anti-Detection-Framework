@@ -1,56 +1,28 @@
-# Chinese Context Whitelist - P0.4
+# Chinese Context Whitelist
 
-> Consumed by Layer 0 during Chinese discovery and by Layer 1 during planning.
-> Layer 2 must not read this file directly; it only executes exact BEFORE/AFTER pairs already approved in `plan.md`.
+The machine-readable source for this policy is
+[`context_whitelist.json`](context_whitelist.json). `scan_rules.py` loads that
+JSON through each rule's `whitelist_ref`; this Markdown file is guidance for
+reviewers and plan authors only.
 
-## Purpose
+## Dispositions
 
-Chinese trigger words are not always AI signals. Some are legitimate inside fixed terms, technical terms, paired structures, or genre-specific phrases. This whitelist prevents substring-level replacements such as `生态环境` -> `协作体系环境` and `不仅仅` -> `不只仅`.
+- `whitelisted`: a fixed or technical context. Do not create a mechanical fix.
+- `review`: context is plausible but needs sentence-level human review.
+- no matching entry: the hit remains actionable evidence.
 
-Layer 0 uses this file to mark obvious fixed-context matches as `whitelisted: true` so they do not enter Layer 1 as mechanical fixes. Layer 1 uses it again as a defensive check for ambiguous contexts.
+The scanner evaluates every configured matcher that contains the rule hit. The
+longest containing context wins. If equal-length matches disagree on the
+disposition, the JSON configuration is invalid and scanning stops with exit
+code 2.
 
-## Required Output Statuses
+## Review Guidance
 
-- `whitelisted: true`: fixed or technical context; do not plan a replacement.
-- `whitelisted: review`: context is ambiguous or genre-dependent; Layer 1 may propose a fix only after reading the sentence.
-- `checked, no whitelist match`: normal candidate hit; Layer 1 may plan a replacement.
+`生态环境`, `数字化转型`, and `控制闭环` are protected technical or fixed
+terms. `业务闭环`, concrete `痛点`, and genre-dependent `赋能` contexts need
+review rather than mechanical synonym replacement. Paired forms such as
+`不仅……而且……` must be evaluated as a whole; never edit only one side.
 
-## Mandatory Whitelist Table
-
-| Trigger | Rule family | Do not replace when context matches | Notes |
-|:---|:---|:---|:---|
-| `生态` | C-04 | `生态环境`, `生态系统`, `生态保护`, `市场生态`, `平台生态` | Fixed or semi-fixed compounds. Replace only when the word is vague business filler. |
-| `闭环` | C-04 | `控制闭环`, `闭环控制` | Technical control-theory terms are not internet jargon. `业务闭环` is genre-dependent. |
-| `赋能` | C-04 | `数字赋能`, `技术赋能`, `数据赋能` in business/report genres | `赋能教师` or `赋能学生` usually needs phrase-level semantic redesign, not a one-word synonym. |
-| `痛点` | C-04 | `用户痛点`, `行业痛点`, `业务痛点` when tied to concrete evidence | Keep concrete analytical uses; replace slogan-like uses. |
-| `不仅` | C-09 | `不仅仅`, `不仅如此` | Never substring-replace inside these longer phrases. |
-| `不仅...而且` | C-09 | paired contrast structures that carry real logic | Rewrite the whole pair or leave it; never edit one side only. |
-| `一方面` | C-09 / S-12 | `一方面...另一方面` | Treat as one paired structure. Do not create `先看...另先看`. |
-| `同时` | C-12 / S-13 | `与此同时`, `同时进行`, literal simultaneity | Flag discourse-marker density, not normal time/adverbial use. |
-| `进行` | S-06 | `进行得很顺利`, `正在进行`, literal progress/process use | Only flag padded verb patterns such as `对 X 进行 Y`. |
-| `化` suffix | C-05 | `数字化转型`, `自动化控制`, `信息化建设`, `标准化接口`, `智能化调度` | Accepted domain terms. Flag vague suffix stacking or density, not every suffix. |
-
-## Layer 0 Procedure
-
-1. When a Chinese C-NN or S-NN trigger is found, inspect the shortest containing phrase first, then the full sentence.
-2. If the phrase exactly matches this table, record it in `discovery.md` as `whitelisted: true`.
-3. If the phrase is close to a whitelist form but genre-dependent, record `whitelisted: review`.
-4. Only `checked, no whitelist match` hits become Layer 1 candidate fixes.
-
-## Layer 1 Procedure
-
-Before writing any BEFORE/AFTER pair for a Chinese C-NN or S-NN hit:
-
-1. Re-check the BEFORE string against this table.
-2. If the BEFORE string contains a whitelist context, drop the mechanical fix or move it to Open Questions.
-3. If the trigger is part of a paired structure, write one exact pair-level fix or leave the pair unchanged.
-4. Do not use substring replacements for Chinese triggers unless the surrounding phrase was explicitly checked.
-
-## Expansion Rule
-
-When a batch evaluation finds a new context-sensitive failure, route it by side before adding more replacement candidates:
-
-- **BEFORE-side failures** go into this whitelist table when the original trigger is legitimate in context and should not become a mechanical fix.
-- **AFTER-side failures** go into `rules/zh/replacement_blacklist.md` when a proposed replacement creates malformed wording, register downgrade, or a new AI-like phrase.
-
-Both updates must happen before adding new replacement candidates to `ai_cliches.md` or `sentence_patterns.md`.
+When a valid context requires a new policy, add a JSON entry with an ID, the
+applicable rule IDs, trigger, context matcher, and disposition. Do not use this
+document as a second machine source.

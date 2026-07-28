@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "ZH-WL-01",
+      "rule_ids": ["C-04"],
+      "trigger": "生态",
+      "context_matcher": "(?:生态环境|生态系统|生态保护|市场生态|平台生态)",
+      "disposition": "whitelisted"
+    },
+    {
+      "id": "ZH-WL-02",
+      "rule_ids": ["C-04"],
+      "trigger": "闭环",
+      "context_matcher": "(?:控制闭环|闭环控制)",
+      "disposition": "whitelisted"
+    },
+    {
+      "id": "ZH-RV-01",
+      "rule_ids": ["C-04"],
+      "trigger": "闭环",
+      "context_matcher": "业务闭环",
+      "disposition": "review"
+    },
+    {
+      "id": "ZH-WL-03",
+      "rule_ids": ["C-05"],
+      "trigger": "数字化",
+      "context_matcher": "数字化转型",
+      "disposition": "whitelisted"
+    },
+    {
+      "id": "ZH-RV-02",
+      "rule_ids": ["C-04"],
+      "trigger": "赋能",
+      "context_matcher": "(?:数字赋能|技术赋能|数据赋能|赋能教师|赋能学生)",
+      "disposition": "review"
+    },
+    {
+      "id": "ZH-RV-03",
+      "rule_ids": ["C-04"],
+      "trigger": "痛点",
+      "context_matcher": "(?:用户痛点|行业痛点|业务痛点)",
+      "disposition": "review"
+    },
+    {
+      "id": "ZH-WL-04",
+      "rule_ids": ["C-09"],
+      "trigger": "不仅",
+      "context_matcher": "(?:不仅仅|不仅如此)",
+      "disposition": "whitelisted"
+    },
+    {
+      "id": "ZH-RV-04",
+      "rule_ids": ["C-12", "S-13"],
+      "trigger": "同时",
+      "context_matcher": "(?:与此同时|同时进行)",
+      "disposition": "review"
+    }
+  ]
+}

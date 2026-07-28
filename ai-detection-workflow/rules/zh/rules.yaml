@@ -17,8 +17,10 @@
   name: "开场定位套语"
   family: C
   match_type: literal
-  literals: ["在当今社会", "在当前背景下", "在新时代", "随着...的发展", "随着...的不断深入", "随着...的日益普及", "在...的推动下", "伴随着", "在全球化的今天", "在信息化时代"]
+  literals: ["在当今社会", "在当前背景下", "在新时代", "伴随着", "在全球化的今天", "在信息化时代"]
   pattern: null
+  # Placeholder variants are bounded to 1..20 non-sentence, non-newline characters.
+  patterns: ["随着[^\\n。！？；]{1,20}的发展", "随着[^\\n。！？；]{1,20}的不断深入", "随着[^\\n。！？；]{1,20}的日益普及", "在[^\\n。！？；]{1,20}的推动下"]
   scan: auto
   frequency: normal
   whitelist_ref: null
@@ -43,7 +45,7 @@
   pattern: null
   scan: auto
   frequency: high
-  whitelist_ref: "rules/zh/context_whitelist.md"
+  whitelist_ref: "rules/zh/context_whitelist.json"
   source: rules/zh/ai_cliches.md#c-04
 
 - id: C-05
@@ -54,7 +56,7 @@
   pattern: null
   scan: auto
   frequency: high
-  whitelist_ref: null
+  whitelist_ref: "rules/zh/context_whitelist.json"
   source: rules/zh/ai_cliches.md#c-05
 
 - id: C-06
@@ -83,7 +85,7 @@
   name: "首先其次再次最后"
   family: C
   match_type: literal
-  literals: ["首先", "其次", "再次", "然后", "最后；第一", "第二", "第三", "第四；一是", "二是", "三是", "四是"]
+  literals: ["首先", "其次", "再次", "然后", "最后", "第一", "第二", "第三", "第四", "一是", "二是", "三是", "四是"]
   pattern: null
   scan: auto
   frequency: high
@@ -94,18 +96,18 @@
   name: "不仅...而且/更... 套句"
   family: C
   match_type: regex
-  literals: ["不仅...而且", "不仅...还", "不仅...更", "不但...而且", "既...又...", "一方面...另一方面", "既要...又要...", "要...也要..."]
+  literals: []
   pattern: "(不仅.{0,40}(而且|还|更)|不但.{0,40}而且|既.{0,30}又|一方面.{0,60}另一方面|既要.{0,30}又要|要.{0,30}也要)"
   scan: auto
   frequency: high
-  whitelist_ref: null
+  whitelist_ref: "rules/zh/context_whitelist.json"
   source: rules/zh/ai_cliches.md#c-09
 
 - id: C-10
   name: "因果链套句"
   family: C
   match_type: regex
-  literals: ["之所以...是因为", "正是因为...所以", "由于...因此", "鉴于...故而", "之所以...在于"]
+  literals: []
   pattern: "(之所以.{0,60}是因为|正是因为.{0,60}所以|由于.{0,60}因此|鉴于.{0,60}故而|之所以.{0,60}在于)"
   scan: auto
   frequency: normal
@@ -131,7 +133,7 @@
   pattern: null
   scan: auto
   frequency: high
-  whitelist_ref: null
+  whitelist_ref: "rules/zh/context_whitelist.json"
   source: rules/zh/ai_cliches.md#c-12
 
 - id: C-13
@@ -171,7 +173,7 @@
   name: "过度周全的免责 / 平衡表述"
   family: C
   match_type: literal
-  literals: ["需要辩证看待", "一分为二", "既有积极的一面", "也有...", "不可一概而论", "需要具体问题具体分析", "因情况而异"]
+  literals: ["需要辩证看待", "一分为二", "既有积极的一面", "不可一概而论", "需要具体问题具体分析", "因情况而异"]
   pattern: null
   scan: auto
   frequency: normal
@@ -182,7 +184,7 @@
   name: "伪总结式反问"
   family: C
   match_type: literal
-  literals: ["为什么会这样？", "问题出在哪里？", "答案是...", "原因有三：", "这是为什么？", "何以至此？"]
+  literals: ["为什么会这样？", "问题出在哪里？", "原因有三：", "这是为什么？", "何以至此？"]
   pattern: null
   scan: auto
   frequency: normal
@@ -340,7 +342,7 @@
   pattern: null
   scan: auto
   frequency: normal
-  whitelist_ref: null
+  whitelist_ref: "rules/zh/context_whitelist.json"
   source: rules/zh/sentence_patterns.md#s-13
 
 - id: S-14
