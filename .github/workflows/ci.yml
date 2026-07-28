@@ -1,0 +1,43 @@
+name: deterministic-workflow-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ['3.11']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Lint and tests
+        shell: pwsh
+        run: |
+          python ai-detection-workflow/tools/lint_repository.py all
+          python -m unittest discover -s ai-detection-workflow/tools/tests -p "test_*.py" -v
+      - name: Tool help
+        shell: pwsh
+        run: |
+          $Tools = @(
+            'scan_rules.py',
+            'structure_metrics.py',
+            'preflight_plan.py',
+            'guardrails_diff.py',
+            'overlap_check.py',
+            'workflow_check.py',
+            'lint_repository.py'
+          )
+          foreach ($Tool in $Tools) {
+            python (Join-Path 'ai-detection-workflow/tools' $Tool) --help
+            if ($LASTEXITCODE -ne 0) { throw "$Tool --help failed with $LASTEXITCODE" }
+          }
+      - name: Diff check
+        shell: pwsh
+        run: git diff --check

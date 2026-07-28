@@ -98,6 +98,9 @@ class PreflightPlanTests(unittest.TestCase):
         completed = subprocess.run(command, check=False, capture_output=True, text=True, encoding="utf-8")
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertEqual(json.loads(completed.stdout)["mode"], "legacy_single_file")
+        command[5] = str(TESTDATA / "preflight_doc_zero.md")
+        completed = subprocess.run(command, check=False, capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(completed.returncode, 1, completed.stderr)
 
 
 if __name__ == "__main__":

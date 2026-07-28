@@ -35,8 +35,10 @@ not_run`.
 - `preflight_plan.py`: direct plan preflight; `--doc` preserves the legacy
   single-file BEFORE-count mode.
 - `guardrails_diff.py`: source/rewrite fidelity checks.
-- `overlap_check.py`: ten-token window overlap evidence using the 0.70 contract
-  threshold when called by workflow gates.
+- `overlap_check.py`: exact token-postings overlap evidence using the ten-token
+  0.70 contract threshold when called by workflow gates. Ordinary inputs avoid
+  the old all-window scan; a degenerate corpus dominated by one repeated token
+  can still create enough candidates to approach quadratic work.
 - `lint_repository.py`: `rules`, `contract`, `gates`, or `all` active-policy
   lint modes.
 

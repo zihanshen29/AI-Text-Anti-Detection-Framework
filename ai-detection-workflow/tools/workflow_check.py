@@ -188,40 +188,26 @@ def run_plan(
 
 
 def _guardrail_component(source: str, rewrite: str, language: str) -> dict[str, Any]:
-    checks = {
-        "number_token_multiset": guardrails_diff.numbers(source) == guardrails_diff.numbers(rewrite),
-        "citation_key_multiset": guardrails_diff.citation_keys(source) == guardrails_diff.citation_keys(rewrite),
-        "heading_sequence": guardrails_diff.headings(source) == guardrails_diff.headings(rewrite),
-        "label_multiset": guardrails_diff.labels(source) == guardrails_diff.labels(rewrite),
+    comparison = guardrails_diff.compare_texts(source, rewrite, language)
+    status = "hard_fail" if comparison["hard_failure"] else "review_warning" if comparison["review_warning"] else "pass"
+    return {
+        "status": status,
+        "checks": comparison["checks"],
+        "hard_failure": comparison["hard_failure"],
+        "review_warning": comparison["review_warning"],
+        "context_changes": comparison["context_changes"],
     }
-    if language == "en":
-        checks["english_rewrite_cjk_residual"] = guardrails_diff.cjk_count(rewrite) == 0
-    failures = [name for name, passed in checks.items() if not passed]
-    return {"status": "hard_fail" if failures else "pass", "checks": checks, "failures": failures}
 
 
 def _overlap_component(current: str, prior: str, language: str, window: int, threshold: float) -> dict[str, Any]:
-    current_tokens = overlap_check.tokenize(current, language)
-    prior_tokens = overlap_check.tokenize(prior, language)
-    findings = []
-    for current_index, current_window in overlap_check.windows(current_tokens, window):
-        prior_index, score, prior_window = overlap_check.best_prior(current_window, overlap_check.windows(prior_tokens, window))
-        if score >= threshold:
-            findings.append(
-                {
-                    "current_pos": current_index,
-                    "prior_pos": prior_index,
-                    "overlap": round(score, 3),
-                    "current_excerpt": overlap_check.excerpt(current_window, language),
-                    "prior_excerpt": overlap_check.excerpt(prior_window, language),
-                }
-            )
+    result = overlap_check.analyze_texts(current, prior, language, window, threshold)
     return {
-        "status": "review_required" if findings else "pass",
+        "status": "review_required" if result["findings"] else "pass",
         "window_tokens": window,
         "overlap_threshold": threshold,
-        "over_threshold_count": len(findings),
-        "findings": findings,
+        "over_threshold_count": result["over_threshold_count"],
+        "findings": result["findings"],
+        "algorithm": result["algorithm"],
     }
 
 
@@ -281,6 +267,8 @@ def run_post_round(manifest_path: str, contract: dict[str, Any]) -> dict[str, An
         target_result["components"]["guardrails"] = guardrails
         if guardrails["status"] == "hard_fail":
             hard_failure = True
+        if guardrails["status"] == "review_warning":
+            review_required = True
 
         rules = load_rules_yaml(repo_path(Path("rules") / language / "rules.yaml"))
         before_scan = scan_rules.scan_text(source, rules, language)

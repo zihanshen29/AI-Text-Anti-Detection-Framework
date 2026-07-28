@@ -210,15 +210,10 @@ def _resolve_inside_root(value: str, project_root: Path) -> tuple[Path | None, s
     return resolved, None
 
 
-def _guardrail_preserved(before: str, after: str) -> tuple[bool, list[str]]:
-    checks = {
-        "number token multiset": guardrails_diff.numbers(before) == guardrails_diff.numbers(after),
-        "citation key multiset": guardrails_diff.citation_keys(before) == guardrails_diff.citation_keys(after),
-        "heading sequence": guardrails_diff.headings(before) == guardrails_diff.headings(after),
-        "label multiset": guardrails_diff.labels(before) == guardrails_diff.labels(after),
-    }
-    failures = [name for name, passed in checks.items() if not passed]
-    return not failures, failures
+def _guardrail_preserved(before: str, after: str, language: str) -> tuple[bool, list[str]]:
+    comparison = guardrails_diff.compare_texts(before, after, language)
+    failures = [item["check"] for item in comparison["checks"] if item["severity"] == "hard_failure" and item["status"] == "hard_fail"]
+    return not comparison["hard_failure"], failures
 
 
 def preflight(
@@ -289,12 +284,13 @@ def preflight(
         result["before_count"] = count_literal(target_text, fix["before"])
         if result["before_count"] != 1:
             result["blockers"].append(f"BEFORE occurs {result['before_count']} times")
-        preserved, guardrail_failures = _guardrail_preserved(fix["before"], fix["after"])
+        language = result["language"]
+        guardrail_language = language if language in {"en", "zh"} else infer_lang([fix["before"], fix["after"]])
+        preserved, guardrail_failures = _guardrail_preserved(fix["before"], fix["after"], guardrail_language)
         result["guardrail_preserved"] = preserved
         result["guardrail_failures"] = guardrail_failures
         if not preserved:
             result["blockers"].append("guardrail text changed: " + ", ".join(guardrail_failures))
-        language = result["language"]
         if language in {"en", "zh"}:
             if language not in rules_cache:
                 rules_cache[language] = load_rules_yaml(repo_path(Path("rules") / language / "rules.yaml"))
