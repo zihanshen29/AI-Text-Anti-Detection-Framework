@@ -117,7 +117,25 @@ def lint_gates() -> list[str]:
         WORKFLOW_ROOT / "tools" / "workflow_check.py",
         CONTRACT_PATH,
     ]
-    return [f"required gate artifact is missing: {path.relative_to(WORKFLOW_ROOT)}" for path in required if not path.exists()]
+    issues = [f"required gate artifact is missing: {path.relative_to(WORKFLOW_ROOT)}" for path in required if not path.exists()]
+    expected_text = {
+        Path("workflow/discovery.md"): "workflow_check.py discovery",
+        Path("workflow/planning.md"): "workflow_check.py plan",
+        Path("workflow/execution.md"): "workflow_check.py post-round",
+        Path("templates/changes_log.md"): "Plan manifest hash",
+    }
+    for relative_path, marker in expected_text.items():
+        try:
+            text = (WORKFLOW_ROOT / relative_path).read_text(encoding="utf-8")
+        except OSError as exc:
+            issues.append(f"cannot read gate consumer {relative_path}: {exc}")
+            continue
+        if marker not in text:
+            issues.append(f"{relative_path}: missing mandatory gate marker {marker!r}")
+    preflight = WORKFLOW_ROOT / "tools" / "preflight_plan.py"
+    if preflight.exists() and "--project-root" not in preflight.read_text(encoding="utf-8"):
+        issues.append("tools/preflight_plan.py: missing multi-file project-root support")
+    return issues
 
 
 def main() -> int:
