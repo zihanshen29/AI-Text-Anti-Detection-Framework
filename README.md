@@ -12,7 +12,7 @@
 
 AI Text Anti-Detection Framework 是一套面向长文档的 AI 痕迹降低工作流。它不是“一键洗稿器”，而是把诊断、计划、执行和复盘拆开，让写作者能在保留事实、术语、引用和文体要求的前提下，逐轮减少文本里的 AI 味。
 
-适用对象包括论文草稿、研究报告、技术说明、长篇博客和其他需要严肃编辑的文档。当前工作流同时支持中文和英文，并为两种语言维护了独立规则库，因为中文检测器更依赖套话词和固定搭配，英文检测器更关注句法节奏、并列结构和模板化表达。
+适用对象包括论文草稿、研究报告、技术说明、长篇博客和其他需要严肃编辑的文档。当前工作流同时支持中文和英文，分别维护固定搭配、句式节奏和模板表达等编辑规则；这些规则是离线编辑提示，不代表外部检测器的判定机制。
 
 ## 核心能力
 
@@ -53,8 +53,10 @@ AI Text Anti-Detection Framework 是一套面向长文档的 AI 痕迹降低工�
 2. 让 agent 读取 `ai-detection-workflow/SKILL.md`。
 3. 上传或粘贴待处理文档，并说明目标检测器、文体要求和禁止修改的内容。
 4. 先运行 Layer 0，确认 `discovery.md`。
-5. 再运行 Layer 1，审查并批准 `plan.md`。
-6. 最后按轮运行 Layer 2，每轮结束后记录检测分数或人工评估结果。
+5. 再运行 Layer 1，用 `plan --round all --snapshot-dir` 保存执行前的完整基线，审查并批准 `plan.md`。
+6. 最后按轮运行 Layer 2；每轮核对实际正文是否严格符合批准的替换，最终审计用 `--baseline-manifest` 对照完整基线。
+
+可直接运行的命令见 [工具说明](ai-detection-workflow/tools/README.md)，流程约束以 [workflow/contract.json](ai-detection-workflow/workflow/contract.json) 为准。快照使用独立目录；原有 version 1 manifest 需要在编辑前重新生成。
 
 示例提示：
 
@@ -104,15 +106,7 @@ ai-detection-workflow/
 
 ## 评估标准
 
-离线评估默认使用 35 分制：
-
-- AI 信号下降：5 分
-- 可读性与自然度：5 分
-- 语义与事实保真：5 分
-- 体裁适配：5 分
-- 结构与逻辑：5 分
-- 修改可控性：5 分
-- 检测与复盘记录：5 分
+离线评估使用七维、每维 1–5 分的 35 分制。维度、评分锚点和硬失败定义统一维护在 [离线评分表](ai-detection-workflow/meta/rubric/offline_rubric.md)，评估时直接使用该表。
 
 批量报告必须注明是否运行外部检测器。如果未运行 GPTZero、Turnitin、Originality.ai、知网、万方等外部检测器，报告只能称为离线评估，不能伪装成检测器结果。
 
@@ -147,7 +141,7 @@ MIT
 
 AI Text Anti-Detection Framework is a structured workflow for reducing AI-like signals in long-form documents. It is not a one-click paraphraser. It separates diagnosis, planning, execution, and review so writers can reduce machine-like phrasing without damaging facts, terminology, citations, or genre requirements.
 
-It is intended for theses, research papers, technical reports, long-form essays, blog posts, and other documents that need careful editing. The framework supports both Chinese and English with separate rule libraries because Chinese detectors tend to react more strongly to fixed phrases and cliches, while English detectors tend to emphasize syntax, rhythm, parallelism, and templated phrasing.
+It is intended for theses, research papers, technical reports, long-form essays, blog posts, and other documents that need careful editing. Chinese and English have separate editorial rules for fixed phrases, syntax, rhythm, and templated language. These are offline editing aids, not descriptions of external detectors' decision mechanisms.
 
 ## Key Features
 
@@ -188,8 +182,10 @@ Output: `CHANGES_roundN.md`
 2. Ask the agent to read `ai-detection-workflow/SKILL.md`.
 3. Upload or paste the document, then specify the target detector, style constraints, and content that must not be changed.
 4. Run Layer 0 first and review `discovery.md`.
-5. Run Layer 1 next and approve `plan.md`.
-6. Run Layer 2 round by round, recording detector scores or manual evaluation results after each round.
+5. Run Layer 1 with `plan --round all --snapshot-dir` to save the full pre-edit baseline, then review and approve `plan.md`.
+6. Run Layer 2 round by round, checking the actual text against the approved replacements. Use `--baseline-manifest` for the final audit against the original full baseline.
+
+See the [tooling guide](ai-detection-workflow/tools/README.md) for executable commands and [workflow/contract.json](ai-detection-workflow/workflow/contract.json) for the governing policy. Snapshots use unique directories; regenerate old version 1 manifests before editing.
 
 Example prompt:
 
@@ -239,15 +235,7 @@ ai-detection-workflow/
 
 ## Evaluation Rubric
 
-Offline evaluation uses a 35-point rubric:
-
-- AI-signal reduction: 5 points
-- Readability and naturalness: 5 points
-- Semantic and factual fidelity: 5 points
-- Genre fit: 5 points
-- Structure and logic: 5 points
-- Change controllability: 5 points
-- Measurement and review record: 5 points
+Offline evaluation uses seven dimensions scored from 1 to 5, for a maximum of 35. Use the [canonical offline rubric](ai-detection-workflow/meta/rubric/offline_rubric.md) for the dimensions, scoring anchors, and hard-fail definitions.
 
 Batch reports must state whether external detectors were run. If GPTZero, Turnitin, Originality.ai, CNKI, Wanfang, or similar detectors were not run, the result must be described as offline evaluation rather than an external detector score.
 

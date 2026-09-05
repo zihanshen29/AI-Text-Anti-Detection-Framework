@@ -9,12 +9,21 @@ not edit target files or call external detectors.
 ## Required Gate
 
 ```powershell
-python .\tools\workflow_check.py plan --plan <plan-path> --round all --project-root <project-root> --output <plan-json>
+python .\tools\workflow_check.py plan --plan <plan-path> --round all --project-root <project-root> --snapshot-dir <snapshot-parent> --output <baseline-manifest.json>
 ```
 
 Approval is blocked unless this command exits 0. Each target must resolve
 inside `project-root`; path escapes, ambiguous BEFORE strings, and unacknowledged
 AFTER hits are blocking review findings.
+
+The all-round gate simulates exact edits in execution order without changing
+the documents. Save this complete baseline before the first edit: the final
+audit uses it to replay the full plan. If the plan changes before execution,
+regenerate the baseline and its approval record. A selected edit round checks
+the current document state after the preceding rounds.
+
+Carry discovery's manual-rule checklist into planning. Record the applicable
+sentence-level judgments; a zero automatic hit count is not a manual-rule pass.
 
 ## Plan Rules
 

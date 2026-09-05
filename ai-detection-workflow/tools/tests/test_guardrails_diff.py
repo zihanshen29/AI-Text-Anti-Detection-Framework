@@ -23,6 +23,30 @@ Values −1, +2.5, 1,234.5e-6, 25%, and v1.2.3 are fixed.
 
 
 class GuardrailsDiffTests(unittest.TestCase):
+    def test_cjk_quantities_and_attached_units_are_guarded(self) -> None:
+        cases = (
+            ("样本量为30人。", "样本量为80人。", "zh"),
+            ("增长10%。", "增长20%。", "zh"),
+            ("增长10％。", "增长20％。", "zh"),
+            ("温度为−2.5℃。", "温度为−3.5℃。", "zh"),
+            ("共有1,234人。", "共有1,235人。", "zh"),
+            ("Delay is 10ms.", "Delay is 90ms.", "en"),
+            ("Delay is 1.2e−3ms.", "Delay is 1.2e−4ms.", "en"),
+            ("Value is .5%.", "Value is .6%.", "en"),
+            ("版本v1.2已发布。", "版本v1.3已发布。", "zh"),
+        )
+        for source, rewrite, language in cases:
+            with self.subTest(source=source):
+                self.assertTrue(guardrails_diff.extract_entities(source))
+                self.assertTrue(guardrails_diff.compare_texts(source, rewrite, language)["hard_failure"])
+                self.assertFalse(guardrails_diff.compare_texts(source, source, language)["hard_failure"])
+
+    def test_numeric_boundaries_do_not_extract_identifier_fragments(self) -> None:
+        self.assertEqual(guardrails_diff.numbers("sha256 encoder2 item_42"), {})
+        self.assertEqual(guardrails_diff.numbers("1.2.3"), {"1.2.3": 1})
+        same_values = guardrails_diff.compare_texts("样本量为30人。", "样本总数为30人。", "zh")
+        self.assertFalse(same_values["hard_failure"])
+
     def test_extracts_required_numeric_citation_heading_and_label_forms(self) -> None:
         entities = guardrails_diff.extract_entities(RICH_SOURCE)
         numbers = guardrails_diff.numbers(RICH_SOURCE)

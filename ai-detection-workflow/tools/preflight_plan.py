@@ -154,7 +154,25 @@ def count_literal(haystack: str, needle: str) -> int:
         if index == -1:
             return count
         count += 1
-        start = index + len(needle)
+        start = index + 1
+
+
+def normalize_edit_text(text: str) -> str:
+    """Only normalize line endings; spaces and all other text remain exact."""
+
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def apply_exact_fix(text: str, fix: dict[str, Any]) -> str:
+    """Replay one approved replacement, rejecting missing or ambiguous text."""
+
+    current = normalize_edit_text(text)
+    before = normalize_edit_text(fix["before"])
+    after = normalize_edit_text(fix["after"])
+    count = count_literal(current, before)
+    if count != 1:
+        raise ToolError(f"BEFORE occurs {count} times")
+    return current.replace(before, after, 1)
 
 
 def status_for(count: int) -> str:
@@ -183,6 +201,8 @@ def _contract_blockers(parsed: dict[str, Any], contract: dict[str, Any]) -> list
         if fix["round"] is None:
             blockers.append(f"{fix['fix_id']}: fix must appear inside a numbered round")
     tiers = set(contract["editing"]["risk_tiers"])
+    if not parsed["fixes"]:
+        blockers.append("plan has no edit targets; record a zero-edit outcome in discovery")
     for round_item in parsed["rounds"]:
         if not round_item["fixes"]:
             continue
@@ -240,6 +260,7 @@ def preflight(
         blockers.append(f"requested round {round_selection} does not exist")
 
     rules_cache: dict[str, list[dict[str, Any]]] = {}
+    working_texts: dict[Path, str] = {}
     fix_results: list[dict[str, Any]] = []
     plan_language = (parsed["metadata"]["plan_language"] or "").lower()
     for fix in parsed["fixes"]:
@@ -260,6 +281,8 @@ def preflight(
             "status": "blocking",
             "blockers": [],
             "prior_path": None,
+            "before": fix.get("before"),
+            "after": fix.get("after"),
         }
         if not all(fix.get(field) for field in ("file", "before", "after", "secondary_scan_disposition")):
             result["blockers"].append("required fix fields are missing")
@@ -279,14 +302,18 @@ def preflight(
             else:
                 result["prior_path"] = str(prior)
         try:
-            target_text = read_text_checked(target)
+            if target not in working_texts:
+                working_texts[target] = normalize_edit_text(read_text_checked(target))
+            target_text = working_texts[target]
         except ToolError as exc:
             result["blockers"].append(str(exc))
             fix_results.append(result)
             continue
-        result["before_count"] = count_literal(target_text, fix["before"])
-        if result["before_count"] != 1:
-            result["blockers"].append(f"BEFORE occurs {result['before_count']} times")
+        result["before_count"] = count_literal(target_text, normalize_edit_text(fix["before"]))
+        try:
+            expected_text = apply_exact_fix(target_text, fix)
+        except ToolError as exc:
+            result["blockers"].append(str(exc))
         language = result["language"]
         guardrail_language = language if language in {"en", "zh"} else infer_lang([fix["before"], fix["after"]])
         preserved, guardrail_failures = _guardrail_preserved(fix["before"], fix["after"], guardrail_language)
@@ -305,6 +332,8 @@ def preflight(
         else:
             result["blockers"].append("language did not resolve to en or zh")
         result["status"] = "pass" if not result["blockers"] else "blocking"
+        if result["status"] == "pass":
+            working_texts[target] = expected_text
         fix_results.append(result)
 
     target_languages: dict[str, set[str]] = {}
@@ -327,6 +356,7 @@ def preflight(
         "plan_path": str(plan_full_path),
         "project_root": str(root),
         "round_selection": round_selection,
+        "audit_only": round_selection != "all" and round_selection == str(parsed["metadata"]["total_rounds"]),
         "metadata": parsed["metadata"],
         "fixes": fix_results,
         "blockers": blockers,

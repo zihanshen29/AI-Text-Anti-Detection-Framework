@@ -18,10 +18,16 @@ overlap checks.
 1. **Layer 0 - Discovery.** Run `workflow_check.py discovery` before handing
    the document to planning. Rule hits are evidence, not a failed discovery.
 2. **Layer 1 - Planning.** A plan can request approval only after
-   `workflow_check.py plan --round all` reports an executable plan.
+   `workflow_check.py plan --round all` reports an executable plan. Use
+   `--snapshot-dir` to save a complete baseline before the first edit.
 3. **Layer 2 - Execution.** Before any edit, run snapshot preflight for the
    selected round. After the round, run `workflow_check.py post-round` and
    record its JSON evidence in CHANGES.
+
+For the final audit, generate its manifest with `--baseline-manifest` pointing
+to that original all-round baseline, then run `post-round`. Final audit replays
+the entire plan against every original target. Preserve discovery's pending
+manual-rule checklist and record the sentence-level review decisions in planning.
 
 Discovery may recommend zero edits. Once Layer 2 runs, the full plan has 3/5/7
 total rounds, the final round is audit-only, and the final audit is required.

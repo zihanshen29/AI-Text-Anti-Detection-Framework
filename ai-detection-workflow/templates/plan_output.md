@@ -45,9 +45,20 @@
 The final audit is required whenever Layer 2 runs. It records post-round
 evidence; it does not introduce an editing tier.
 
+- **Original all-round baseline manifest:** `<path saved before any edit>`
+- **Audit manifest:** `<plan --round final-N --baseline-manifest ... output>`
+- **Audit post-round evidence:** `<path and disposition>`
+
+## Manual-Rule Review
+
+| Discovery rule | Review status | Reason / fix ID |
+| --- | --- | --- |
+| `<ID>` | `passed / not_applicable / needs_edit` | `<sentence-level evidence>` |
+
 ## Approval Record
 
 - **`plan --round all` JSON:** `<path>`
+- **Original all-round baseline manifest:** `<path>`
 - **Result:** `executable | blocking review | error`
 - **Ten-token overlap threshold:** `0.70`
 - **Rollback policy:** whole round; stop after the first fix or guardrail failure

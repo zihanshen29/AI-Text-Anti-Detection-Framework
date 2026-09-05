@@ -17,10 +17,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Lint and tests
+      - name: Lint
         shell: pwsh
         run: |
           python ai-detection-workflow/tools/lint_repository.py all
+      - name: Tests
+        shell: pwsh
+        run: |
           python -m unittest discover -s ai-detection-workflow/tools/tests -p "test_*.py" -v
       - name: Tool help
         shell: pwsh

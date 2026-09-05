@@ -16,10 +16,14 @@ from tool_common import ToolError, infer_lang, markdown_table, print_error, read
 
 CONTEXT_RADIUS = 48
 NUMBER_RE = re.compile(
-    r"(?<![\w.])(?:[+\-−])?(?:(?:\d{1,3}(?:,\d{3})+)|\d+)(?:\.\d+)?(?:[eE][+\-]?\d+)?%?(?!\w)"
+    # CJK prose and attached units are valid numeric boundaries. Exclude ASCII
+    # identifier prefixes and partial dotted versions, not all Unicode words.
+    r"(?<![A-Za-z0-9_.])(?:[+\-−])?"
+    r"(?:(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\.\d+)"
+    r"(?:[eE][+\-−]?\d+)?[%％]?(?![0-9_]|\.\d)"
 )
 VERSION_RE = re.compile(
-    r"(?<![\w.])(?:v\d+(?:\.\d+)+|\d+(?:\.\d+){2,})(?![\w.])",
+    r"(?<![A-Za-z0-9_.])(?:v\d+(?:\.\d+)+|\d+(?:\.\d+){2,})(?![A-Za-z0-9_.])",
     re.IGNORECASE,
 )
 NUMERIC_CITATION_RE = re.compile(r"\[(\s*\d+(?:\s*(?:,|;|[-–])\s*\d+)*\s*)\]")

@@ -17,9 +17,6 @@ REPO_ROOT = WORKFLOW_ROOT
 MOJIBAKE_MARKERS = (
     "\ufffd",
     "锟斤拷",
-    "鍘",
-    "鐗",
-    "涓",
 )
 
 

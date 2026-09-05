@@ -17,19 +17,34 @@ Run commands from `ai-detection-workflow` on PowerShell:
 
 ```powershell
 python .\tools\workflow_check.py discovery --text <document> --lang auto --output <discovery.json>
-python .\tools\workflow_check.py plan --plan <plan.md> --round all --project-root <project-root> --output <plan.json>
+python .\tools\workflow_check.py plan --plan <plan.md> --round all --project-root <project-root> --snapshot-dir <snapshots> --output <baseline.json>
 python .\tools\workflow_check.py plan --plan <plan.md> --round <N> --project-root <project-root> --snapshot-dir <snapshots> --output <plan-manifest.json>
 python .\tools\workflow_check.py post-round --manifest <plan-manifest.json> --output <post-round.json>
+python .\tools\workflow_check.py plan --plan <plan.md> --round <final-N> --project-root <project-root> --baseline-manifest <baseline.json> --output <audit-manifest.json>
+python .\tools\workflow_check.py post-round --manifest <audit-manifest.json> --output <audit-results.json>
 ```
 
 Layer 0 handoff requires discovery JSON. Layer 1 approval requires a successful
 `plan --round all` gate. Layer 2 editing requires a successful snapshot gate;
 Layer 2 handoff requires `post-round` evidence. JSON output labels every
-runtime hash as `worktree_raw_sha256` and records `external_detector_status:
+file-byte hash as `worktree_raw_sha256` and records `external_detector_status:
 not_run`. Plan manifests freeze the plan, workflow contract, target snapshots,
 and configured prior versions. Post-round validation rejects drift in those
 inputs or in the contract overlap settings. An output path may not alias an
 input file.
+
+Snapshot manifests now use schema version 2; generate a new baseline before
+editing instead of reusing a version 1 manifest. Each snapshot call creates a
+unique directory under the supplied parent and never overwrites an existing
+snapshot. Preserve the original all-round baseline for the final audit, and
+use separate output JSON filenames for the baseline and every round.
+
+All-round preflight simulates dependent replacements in plan order. Post-round
+requires the actual text to equal the snapshot plus exactly those approved
+edits. Comparison normalizes UTF-8 BOM and CRLF/LF line endings only, leaving
+spaces and trailing newlines significant. Its textual digests are explicitly
+labeled `utf8_lf_text_sha256`; raw file hashes retain their separate meaning.
+Discovery also exposes pending `manual_rules` for human or agent review.
 
 ## Supporting Tools
 

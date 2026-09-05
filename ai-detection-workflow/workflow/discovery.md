@@ -25,6 +25,8 @@ encoding failure, or invalid rule configuration is an error.
 - document type, fixed technical constraints, and prior versions if supplied;
 - scanner aggregates using `actionable_unique_spans` as the primary total;
 - whitelist and review-context evidence;
+- the `manual_rules` checklist: record each rule as passed, not applicable,
+  or needing an edit, with a short reason; pending rules are not automated passes;
 - structural metrics and the path/hash of the discovery JSON; and
 - either zero edits or the candidate evidence sent to planning.
 

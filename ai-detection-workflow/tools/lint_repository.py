@@ -38,6 +38,7 @@ EXPECTED_CONTRACT = {
     },
 }
 ACTIVE_CONTRACT_PATHS = (
+    Path("../README.md"),
     Path("SKILL.md"),
     Path("workflow/discovery.md"),
     Path("workflow/planning.md"),
@@ -108,6 +109,8 @@ def lint_contract() -> list[str]:
             issues.append(f"{relative_path}: missing workflow/contract.json reference")
         for message in stale_contract_forms(text):
             issues.append(f"{relative_path}: {message}")
+        if relative_path == Path("../README.md") and "ai-detection-workflow/meta/rubric/offline_rubric.md" not in text:
+            issues.append("README.md must link the canonical offline rubric")
     return issues
 
 
